@@ -125,9 +125,9 @@
 <div id="toast"></div>
 
 <script>
+// Chaves de conexão atualizadas a partir do seu projeto
 const SUPABASE_URL = 'https://pgftrljdbtnoeseljbog.supabase.co';
-// SUBSTITUA ABAIXO PELA SUA CHAVE COMPLETA QUE COMEÇA COM eyJhbGciOi...
-const SUPABASE_ANON_KEY = 'SUA_CHAVE_ANON_AQUI'; 
+const SUPABASE_ANON_KEY = 'sb_publishable_V5O-twUL0jm-zeIrtnpd3Q_Cz4A1khY';
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let listaMecanicos = [];
@@ -190,6 +190,7 @@ async function addUser(){
     let telefone = document.getElementById("telefone").value.trim().replace(/\D/g, "");
     if(!nome) return alert("Digite o nome");
     
+    // Inclusão explícita de 'data_cadastro' requerida pela tabela
     const { error } = await supabase.from('mecanicos').insert([{ 
         nome: nome, 
         telefone: telefone,
