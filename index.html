@@ -232,10 +232,11 @@
 <div id="toast"></div>
 
 <script>
-// Chaves Atualizadas do Novo Projeto Supabase ("financeira oficina")
+// Chaves e Inicialização Corretas do Supabase ("financeira oficina")
 const SUPABASE_URL = 'https://spampthijhzrobleoqrk.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_WTdbepY0NYEQtd3Q_Cz4A1khY';
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_ANON_KEY = 'sb_publishable_WTdbepY0NYEQ6gERzWAlKQ_OEbOhqVK';
+const { createClient } = window.supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let listaMecanicos = [];
 let listaLancamentos = [];
@@ -270,19 +271,19 @@ function show(type){
 async function fetchDataFromSupabase() {
     try {
         // Carrega mecânicos
-        let { data: mec, error: errMec } = await supabase.from('mecanicos').select('*');
+        let { data: mec, error: errMec } = await db.from('mecanicos').select('*');
         if (!errMec) listaMecanicos = mec || [];
 
         // Carrega lançamentos
-        let { data: lan, error: errLan } = await supabase.from('lancamentos').select('*');
+        let { data: lan, error: errLan } = await db.from('lancamentos').select('*');
         if (!errLan) listaLancamentos = lan || [];
 
         // Carrega gastos da oficina
-        let { data: gas, error: errGas } = await supabase.from('gastos_empresa').select('*');
+        let { data: gas, error: errGas } = await db.from('gastos_empresa').select('*');
         if (!errGas) listaGastosEmpresa = gas || [];
 
         // Carrega taxa configurada
-        let { data: config, error: errConf } = await supabase.from('configuracoes').select('*').eq('chave', 'taxa_retencao').single();
+        let { data: config, error: errConf } = await db.from('configuracoes').select('*').eq('chave', 'taxa_retencao').single();
         if (!errConf && config) {
             taxa = Number(config.valor);
             document.getElementById('taxa').value = taxa;
@@ -307,7 +308,7 @@ function globalRefresh() {
 async function salvarTaxa(){
     const inputTaxa = Number(document.getElementById("taxa").value);
     
-    const { error } = await supabase.from('configuracoes').upsert(
+    const { error } = await db.from('configuracoes').upsert(
         { chave: 'taxa_retencao', valor: inputTaxa.toString() },
         { onConflict: 'chave' }
     );
@@ -325,7 +326,7 @@ async function addUser(){
 
     if(!nome) return alert("Digite o nome do mecânico");
 
-    const { error } = await supabase.from('mecanicos').insert([{
+    const { error } = await db.from('mecanicos').insert([{
         nome: nome,
         telefone: telefone || null,
         data_cadastro: new Date().toISOString()
@@ -347,7 +348,7 @@ async function addPayment(){
 
     if(!user || !valor) return alert("Selecione o mecânico e informe o valor");
 
-    const { error } = await supabase.from('lancamentos').insert([{
+    const { error } = await db.from('lancamentos').insert([{
         mecanico: user,
         valor: valor,
         tipo: tipo,
@@ -385,7 +386,7 @@ function calc(nome){
 
 async function pagarUser(nome){
     if(confirm(`Zerar o histórico completo de lançamentos de ${nome} no banco de dados?`)){
-        const { error } = await supabase.from('lancamentos').delete().eq('mecanico', nome);
+        const { error } = await db.from('lancamentos').delete().eq('mecanico', nome);
         if (error) return alert("Erro ao limpar dados: " + error.message);
         
         toast('✔ Conta fechada!');
@@ -395,7 +396,7 @@ async function pagarUser(nome){
 
 async function deleteItem(user, id){
     if(confirm("Tem certeza que deseja excluir este lançamento?")) {
-        const { error } = await supabase.from('lancamentos').delete().eq('id', id);
+        const { error } = await db.from('lancamentos').delete().eq('id', id);
         if (error) return alert("Erro ao remover: " + error.message);
         
         toast('🗑️ Item removido!');
@@ -416,7 +417,7 @@ async function editItem(user, id){
     if(valor !== null) dadosAtualizados.valor = Number(valor);
     if(desc !== null) dadosAtualizados.desc = desc;
 
-    const { error } = await supabase.from('lancamentos').update(dadosAtualizados).eq('id', id);
+    const { error } = await db.from('lancamentos').update(dadosAtualizados).eq('id', id);
     if (error) return alert("Erro ao atualizar: " + error.message);
 
     toast('✏️ Item atualizado!');
@@ -513,7 +514,7 @@ async function addGastoEmpresa(){
     let d=document.getElementById("gastoDesc").value || "Gasto Geral";
     if(!v) return;
 
-    const { error } = await supabase.from('gastos_empresa').insert([{
+    const { error } = await db.from('gastos_empresa').insert([{
         valor: v,
         desc: d,
         data: new Date().toISOString()
@@ -529,7 +530,7 @@ async function addGastoEmpresa(){
 
 async function removerGastoEmpresa(id){
     if(confirm("Deseja excluir este gasto operacional?")) {
-        const { error } = await supabase.from('gastos_empresa').delete().eq('id', id);
+        const { error } = await db.from('gastos_empresa').delete().eq('id', id);
         if(error) return alert("Erro ao remover gasto: " + error.message);
         
         toast('🗑️ Gasto removido!');
