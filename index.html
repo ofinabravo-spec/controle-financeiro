@@ -18,110 +18,31 @@
         --text: #ffffff;
         --text-muted: #a0aec0;
     }
-    body {
-        margin: 0;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: var(--bg-main);
-        color: var(--text);
-    }
-    header {
-        background: var(--bg-card);
-        padding: 20px;
-        text-align: center;
-        font-size: 22px;
-        font-weight: bold;
-        border-bottom: 2px solid #202538;
-    }
-    .tabs {
-        display: flex;
-        background: var(--bg-card);
-        margin-bottom: 15px;
-    }
-    .tabs button {
-        flex: 1;
-        padding: 15px;
-        border: none;
-        background: transparent;
-        color: var(--text-muted);
-        font-weight: bold;
-        cursor: pointer;
-        transition: 0.3s;
-        border-bottom: 3px solid transparent;
-    }
-    .tabs button.active {
-        color: var(--accent);
-        border-bottom-color: var(--accent);
-        background: rgba(0, 230, 118, 0.05);
-    }
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-main); color: var(--text); }
+    header { background: var(--bg-card); padding: 20px; text-align: center; font-size: 22px; font-weight: bold; border-bottom: 2px solid #202538; }
+    .tabs { display: flex; background: var(--bg-card); margin-bottom: 15px; }
+    .tabs button { flex: 1; padding: 15px; border: none; background: transparent; color: var(--text-muted); font-weight: bold; cursor: pointer; border-bottom: 3px solid transparent; }
+    .tabs button.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(0, 230, 118, 0.05); }
     .container { padding: 15px; max-width: 800px; margin: 0 auto; }
-    .card {
-        background: var(--bg-card);
-        padding: 20px;
-        margin-bottom: 15px;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-    }
-    h3 { margin-top: 0; margin-bottom: 15px; font-size: 18px; color: var(--text); display: flex; align-items: center; gap: 8px;}
+    .card { background: var(--bg-card); padding: 20px; margin-bottom: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+    h3 { margin-top: 0; margin-bottom: 15px; font-size: 18px; display: flex; align-items: center; gap: 8px;}
     label { font-size: 12px; color: var(--text-muted); display: block; margin-top: 8px; }
-    input, select {
-        width: 100%;
-        padding: 12px;
-        margin: 6px 0 12px 0;
-        border: 1px solid #2d3446;
-        border-radius: 8px;
-        background: var(--bg-input);
-        color: white;
-        box-sizing: border-box;
-    }
+    input, select { width: 100%; padding: 12px; margin: 6px 0 12px 0; border: 1px solid #2d3446; border-radius: 8px; background: var(--bg-input); color: white; box-sizing: border-box; }
     .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-    .btn {
-        width: 100%;
-        padding: 12px;
-        border: none;
-        border-radius: 8px;
-        color: white;
-        font-weight: bold;
-        cursor: pointer;
-        transition: 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-    }
-    .btn:hover { filter: brightness(1.2); }
+    .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-success { background: var(--accent); color: #000; }
     .btn-primary { background: var(--primary); }
     .btn-warning { background: var(--warning); }
     .btn-danger { background: var(--danger); }
-    
-    .item {
-        background: var(--bg-input);
-        padding: 12px;
-        margin: 8px 0;
-        border-radius: 8px;
-        border-left: 4px solid var(--primary);
-    }
+    .item { background: var(--bg-input); padding: 12px; margin: 8px 0; border-radius: 8px; border-left: 4px solid var(--primary); }
     .item.vale { border-left-color: var(--danger); }
     .saldo-destaque { font-size: 24px; font-weight: bold; margin-bottom: 15px; color: var(--accent); }
     .hidden { display: none !important; }
-    
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #2d3446; text-align: center; }
-    th { color: var(--text-muted); font-size: 12px; text-transform: uppercase; }
-
-    #toast {
-        position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-        background: var(--accent); color: #000; padding: 12px 25px;
-        border-radius: 30px; font-weight: bold; opacity: 0; transition: .3s; z-index: 9999;
-    }
+    th, td { padding: 10px; border-bottom: 1px solid #2d3446; text-align: center; }
+    th { color: var(--text-muted); font-size: 12px; }
+    #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #000; padding: 12px 25px; border-radius: 30px; font-weight: bold; opacity: 0; transition: .3s; z-index: 9999; }
     #toast.show { opacity: 1; }
-
-    @media print {
-        body { background: white; color: black; }
-        .tabs, input, select, button, .btn, .card:has(input), header { display: none !important; }
-        .card { background: white; color: black; box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; }
-        .item { background: #f5f5f5; color: black; border: 1px solid #ddd; }
-    }
 </style>
 </head>
 <body>
@@ -129,12 +50,11 @@
 <header>📋 Controle Financeiro PRO</header>
 
 <div class="tabs">
-    <button id="tab-ind" class="active" onclick="show('individual')">👤 Mecânicos / Individual</button>
-    <button id="tab-ger" onclick="show('geral')">🌐 Relatório Geral & Ranking</button>
+    <button id="tab-ind" class="active" onclick="show('individual')">👤 Mecânicos</button>
+    <button id="tab-ger" onclick="show('geral')">🌐 Relatório Geral</button>
 </div>
 
 <div class="container">
-
     <div class="card">
         <h3>📅 Filtro de Período Geral</h3>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -151,16 +71,16 @@
 
     <div id="individualBox">
         <div class="card">
-            <h3>⚙️ Configuração Geral</h3>
-            <label>Taxa de Retenção da Empresa (%)</label>
-            <input id="taxa" type="number" placeholder="Ex: 20">
+            <h3>⚙️ Configuração</h3>
+            <label>Taxa de Retenção (%)</label>
+            <input id="taxa" type="number" value="20">
             <button class="btn btn-success" onclick="salvarTaxa()">💾 Salvar Taxa</button>
         </div>
 
         <div class="card">
             <h3>👤 Cadastrar Novo Mecânico</h3>
             <input id="nome" placeholder="Nome do Mecânico">
-            <input id="telefone" placeholder="Telefone (Ex: 5591982976479)">
+            <input id="telefone" placeholder="Telefone (DDD + Número)">
             <button class="btn btn-success" onclick="addUser()">➕ Adicionar Mecânico</button>
         </div>
 
@@ -171,54 +91,40 @@
             
             <label>Valor (R$)</label>
             <input id="valor" type="number" placeholder="0.00">
-            
-            <label>Descrição do Serviço</label>
-            <input id="desc" placeholder="Ex: Alinhamento, Troca de Óleo...">
-            
+            <label>Descrição</label>
+            <input id="desc" placeholder="Ex: Troca de Óleo">
             <label>Tipo</label>
             <select id="tipo">
-                <option value="acrescimo">➕ Ganho (Serviço executado)</option>
-                <option value="vale">🧾 Gasto (Vale / Retirada)</option>
+                <option value="acrescimo">➕ Ganho</option>
+                <option value="vale">🧾 Vale / Retirada</option>
             </select>
             <button class="btn btn-success" onclick="addPayment()">💾 Gravar Lançamento</button>
         </div>
 
-        <div class="card">
-            <h3>📊 Desempenho no Período</h3>
-            <canvas id="chart" style="max-height: 220px;"></canvas>
-        </div>
-
+        <div class="card"><canvas id="chart" style="max-height: 220px;"></canvas></div>
         <div class="card" id="resumo"></div>
-        
         <div class="card">
-            <h3>📜 Histórico de Lançamentos</h3>
+            <h3>📜 Histórico</h3>
             <div id="listaLancamentos"></div>
         </div>
     </div>
 
     <div id="geralBox" class="hidden">
         <div class="card">
-            <h3>🏢 Gastos Operacionais da Empresa</h3>
+            <h3>🏢 Gastos da Empresa</h3>
             <input id="gastoValor" type="number" placeholder="Valor R$">
-            <input id="gastoDesc" placeholder="Descrição do Gasto">
+            <input id="gastoDesc" placeholder="Descrição">
             <button class="btn btn-success" onclick="addGastoEmpresa()">➕ Registrar Gasto</button>
             <div id="listaGastosEmpresa" style="margin-top: 15px;"></div>
         </div>
-
         <div class="card" id="resumoGeral"></div>
-        
-        <div class="card">
-            <h3>🏆 Ranking de Mecânicos no Período</h3>
-            <div id="rankingMecanicos"></div>
-        </div>
+        <div class="card" id="rankingMecanicos"></div>
     </div>
-
 </div>
 
 <div id="toast"></div>
 
 <script>
-// CONFIGURAÇÃO DO SUPABASE (Conectado ao seu banco)
 const SUPABASE_URL = 'https://pgftrljdbtnoeseljbog.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_V5O-twUL0jm-zeIrtnpd3Q_Cz4A1khY';
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -230,16 +136,16 @@ let taxa = Number(localStorage.getItem("taxa")) || 20;
 let chart;
 let currentTab = "individual";
 
-// Inicialização das datas
 const hoje = new Date();
-document.getElementById('filtroInicio').value = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
-document.getElementById('filtroFim').value = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0];
+const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
+const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0];
+document.getElementById('filtroInicio').value = primeiroDia;
+document.getElementById('filtroFim').value = ultimoDia;
 document.getElementById('taxa').value = taxa;
 
 function toast(msg){
     const t = document.getElementById("toast");
-    t.textContent = msg;
-    t.classList.add("show");
+    t.textContent = msg; t.classList.add("show");
     setTimeout(()=>t.classList.remove("show"),2000);
 }
 
@@ -247,10 +153,8 @@ function show(type){
     currentTab = type;
     document.getElementById("individualBox").classList.toggle("hidden", type!=="individual");
     document.getElementById("geralBox").classList.toggle("hidden", type!=="geral");
-    
     document.getElementById("tab-ind").classList.toggle("active", type==="individual");
     document.getElementById("tab-ger").classList.toggle("active", type==="geral");
-
     globalRefresh();
 }
 
@@ -258,49 +162,48 @@ async function fetchDataFromSupabase() {
     try {
         let { data: mec } = await supabase.from('mecanicos').select('*');
         listaMecanicos = mec || [];
-
         let { data: lan } = await supabase.from('lancamentos').select('*');
         listaLancamentos = lan || [];
-
         let { data: gas } = await supabase.from('gastos_empresa').select('*');
         listaGastosEmpresa = gas || [];
 
         updateUserSelectUI();
         globalRefresh();
-    } catch (e) {
-        console.error(e);
-    }
+    } catch (e) { console.error(e); }
 }
 
 function globalRefresh() {
-    if(currentTab === "geral") {
-        renderGeral();
-    } else {
-        let u = document.getElementById("userSelect").value;
-        if(u) renderUser(u);
-    }
+    if(currentTab === "geral") { renderGeral(); } 
+    else { let u = document.getElementById("userSelect").value; if(u) renderUser(u); }
 }
 
 function salvarTaxa(){
     taxa = Number(document.getElementById("taxa").value);
     localStorage.setItem("taxa", taxa);
-    toast('✅ Taxa atualizada globalmente!');
+    toast('✅ Taxa salva!');
     globalRefresh();
 }
 
 async function addUser(){
     let nome = document.getElementById("nome").value.trim();
     let telefone = document.getElementById("telefone").value.trim().replace(/\D/g, "");
-
-    if(!nome) return alert("Digite o nome do mecânico");
-
-    const { error } = await supabase.from('mecanicos').insert([{ nome, telefone }]);
+    if(!nome) return alert("Digite o nome");
     
-    if(error) return alert("Erro ao adicionar: " + error.message);
+    // Corrigido para incluir 'data_cadastro' explicitamente
+    const { error } = await supabase.from('mecanicos').insert([{ 
+        nome: nome, 
+        telefone: telefone,
+        data_cadastro: new Date().toISOString()
+    }]);
+    
+    if(error) {
+        console.error(error);
+        return alert("Erro ao salvar no banco: " + error.message);
+    }
 
     document.getElementById("nome").value = "";
     document.getElementById("telefone").value = "";
-    toast('✅ Mecânico adicionado no Supabase!');
+    toast('✅ Adicionado com sucesso!');
     await fetchDataFromSupabase();
 }
 
@@ -308,15 +211,18 @@ async function addPayment(){
     let user = document.getElementById("userSelect").value;
     let valor = Number(document.getElementById("valor").value);
     let tipo = document.getElementById("tipo").value;
-    let desc = document.getElementById("desc").value || "Sem descrição";
-
-    if(!user || !valor) return alert("Selecione o mecânico e informe o valor");
-
-    const { error } = await supabase.from('lancamentos').insert([{
-        valor, tipo, desc, mecanico: user, data: new Date().toISOString()
+    let desc = document.getElementById("desc").value || "Serviço";
+    if(!user || !valor) return alert("Preencha os campos");
+    
+    const { error } = await supabase.from('lancamentos').insert([{ 
+        valor: valor, 
+        tipo: tipo, 
+        desc: desc, 
+        mecanico: user, 
+        data: new Date().toISOString() 
     }]);
 
-    if(error) return alert("Erro ao lançar: " + error.message);
+    if(error) return alert("Erro no lançamento: " + error.message);
 
     document.getElementById("valor").value = "";
     document.getElementById("desc").value = "";
@@ -326,137 +232,50 @@ async function addPayment(){
 
 function calc(nome){
     let ganhos=0, gastos=0;
-    let ini = new Date(document.getElementById('filtroInicio').value + 'T00:00:00');
-    let fim = new Date(document.getElementById('filtroFim').value + 'T23:59:59');
+    let dataInicioInput = document.getElementById('filtroInicio').value;
+    let dataFimInput = document.getElementById('filtroFim').value;
+    
+    let ini = dataInicioInput ? new Date(dataInicioInput + 'T00:00:00') : new Date(2000,0,1);
+    let fim = dataFimInput ? new Date(dataFimInput + 'T23:59:59') : new Date(2100,0,1);
 
     let filtrados = listaLancamentos.filter(x => {
         let d = new Date(x.data);
         return x.mecanico === nome && d >= ini && d <= fim;
     });
-
-    filtrados.forEach(x=>{
-        if(x.tipo==="vale") gastos+=x.valor;
-        else ganhos+=x.valor;
-    });
-
+    filtrados.forEach(x=>{ if(x.tipo==="vale") gastos+=x.valor; else ganhos+=x.valor; });
     let taxaValor = ganhos*(taxa/100);
-    const totalServicos = filtrados.filter(x => x.tipo === "acrescimo").length;
-    return {ganhos, gastos, taxaValor, saldo: ganhos - gastos - taxaValor, totalServicos, filtrados};
-}
-
-async function pagarUser(nome){
-    if(confirm(`Zerar e fechar a conta de ${nome}?`)){
-        const { error } = await supabase.from('lancamentos').delete().eq('mecanico', nome);
-        if(error) return alert("Erro ao zerar: " + error.message);
-        
-        toast('✔ Conta fechada!');
-        await fetchDataFromSupabase();
-    }
-}
-
-async function deleteItem(user, id){
-    const { error } = await supabase.from('lancamentos').delete().eq('id', id);
-    if(error) return alert("Erro ao remover: " + error.message);
-
-    toast('🗑️ Item removido!');
-    await fetchDataFromSupabase();
-}
-
-async function editItem(user, id) {
-    let item = listaLancamentos.find(x=>x.id===id);
-    if(!item) return;
-
-    let valor = prompt("Novo valor:", item.valor);
-    let desc = prompt("Nova descrição:", item.desc);
-
-    if(valor === null || desc === null) return;
-
-    const { error } = await supabase.from('lancamentos').update({ valor: Number(valor), desc: desc }).eq('id', id);
-    if(error) return alert("Erro ao atualizar: " + error.message);
-
-    toast('✏️ Item atualizado!');
-    await fetchDataFromSupabase();
-}
-
-function enviarWhatsApp(nome){
-    let r = calc(nome);
-    let fone = (listaMecanicos.find(m => m.nome === nome) || {}).telefone;
-    if(!fone) return alert("Não há telefone cadastrado para este mecânico.");
-
-    let texto = `*Resumo Financeiro - ${nome}*\n\n` +
-                `📅 Período: ${document.getElementById('filtroInicio').value} até ${document.getElementById('filtroFim').value}\n` +
-                `💰 *Ganhos Brutos:* R$ ${r.ganhos.toFixed(2)}\n` +
-                `🧾 *Vales/Gastos:* R$ ${r.gastos.toFixed(2)}\n` +
-                `📉 *Taxa Oficina (${taxa}%):* R$ ${r.taxaValor.toFixed(2)}\n` +
-                `-----------------------------\n` +
-                `💵 *Saldo Líquido a Receber:* R$ ${r.saldo.toFixed(2)}`;
-    
-    window.open(`https://api.whatsapp.com/send?phone=${fone}&text=${encodeURIComponent(texto)}`, '_blank');
+    return {ganhos, gastos, taxaValor, saldo: ganhos - gastos - taxaValor, totalServicos: filtrados.filter(x=>x.tipo==='acrescimo').length, filtrados};
 }
 
 function renderUser(nome){
     if(!nome) return;
     let r = calc(nome);
-
     if(chart) chart.destroy();
-    
     chart = new Chart(document.getElementById("chart"),{
         type:"bar",
         data:{
             labels: r.filtrados.map(x=> x.desc.substring(0,10)),
-            datasets:[{
-                label: 'Movimentações (R$)',
-                data: r.filtrados.map(x=> x.tipo==="vale" ? -x.valor : x.valor),
-                backgroundColor: r.filtrados.map(x=> x.tipo==="vale" ? '#ff1744' : '#00e676')
-            }]
+            datasets:[{ label: 'R$', data: r.filtrados.map(x=> x.tipo==="vale" ? -x.valor : x.valor), backgroundColor: r.filtrados.map(x=> x.tipo==="vale" ? '#ff1744' : '#00e676') }]
         },
-        options: { responsive: true, plugins: { legend: { display: false } } }
+        options: { responsive: true }
     });
-
     document.getElementById("resumo").innerHTML=`
         <div class="saldo-destaque">👤 ${nome}</div>
         <div class="saldo-destaque" style="color:${r.saldo >= 0 ? '#00e676':'#ff1744'}">💵 Saldo Líquido: R$ ${r.saldo.toFixed(2)}</div>
-        <div style="margin-bottom: 15px;">
-            <div>🔧 Serviços Executados: ${r.totalServicos}</div><div>💰 Produção Bruta: R$ ${r.ganhos.toFixed(2)}</div>
-            <div>🧾 Vales Retirados: R$ ${r.gastos.toFixed(2)}</div>
-            <div>📉 Retenção Oficina (${taxa}%): R$ ${r.taxaValor.toFixed(2)}</div>
-        </div>
-        <div class="btn-group">
-            <button class="btn btn-primary" onclick="enviarWhatsApp('${nome}')">💬 Enviar WhatsApp</button>
-            <button class="btn btn-warning" onclick="window.print()">🖨️ Exportar Período</button>
-        </div>
-        <button class="btn btn-danger" style="margin-top:10px;" onclick="pagarUser('${nome}')">✔ Fechar Conta / Zerar Histórico</button>
+        <div>🔧 Serviços: ${r.totalServicos} | Bruto: R$ ${r.ganhos.toFixed(2)}</div>
+        <div>🧾 Vales: R$ ${r.gastos.toFixed(2)} | Oficina: R$ ${r.taxaValor.toFixed(2)}</div>
     `;
-
     document.getElementById("listaLancamentos").innerHTML = r.filtrados.map(i=>`
-        <div class="item ${i.tipo}">
-            <strong>${i.tipo === 'vale' ? '🧾 GASTO/VALE' : '➕ GANHO'}</strong> - R$ ${i.valor.toFixed(2)}<br>
-            <small>${i.desc}</small> <br>
-            <span style="font-size:10px; color:var(--text-muted)">${new Date(i.data).toLocaleDateString()}</span>
-            <div class="btn-group" style="grid-template-columns: 1fr 1fr; margin-top:5px;">
-                <button class="btn btn-warning" style="padding:4px; font-size:12px;" onclick="editItem('${i.mecanico}',${i.id})">Editar</button>
-                <button class="btn btn-danger" style="padding:4px; font-size:12px;" onclick="deleteItem('${i.mecanico}',${i.id})">Excluir</button>
-            </div>
-        </div>
+        <div class="item ${i.tipo}"><strong>${i.tipo==='vale'?'🧾 VALE':'➕ GANHO'}</strong> - R$ ${i.valor.toFixed(2)}<br><small>${i.desc}</small></div>
     `).join("");
 }
 
-function autoRender(){
-    let u = document.getElementById("userSelect").value;
-    renderUser(u);
-}
+function autoRender(){ renderUser(document.getElementById("userSelect").value); }
 
 function updateUserSelectUI(){
     let sel=document.getElementById("userSelect");
-    let atual = sel.value;
-    sel.innerHTML="";
-
-    listaMecanicos.forEach(m=>{
-        let o=document.createElement("option");
-        o.value=m.nome; o.text=m.nome;
-        sel.appendChild(o);
-    });
-
+    let atual = sel.value; sel.innerHTML="";
+    listaMecanicos.forEach(m=>{ let o=document.createElement("option"); o.value=m.nome; o.text=m.nome; sel.appendChild(o); });
     if(atual) sel.value = atual;
     if(sel.value && !atual) renderUser(sel.value);
 }
@@ -465,84 +284,24 @@ async function addGastoEmpresa(){
     let v=Number(document.getElementById("gastoValor").value);
     let d=document.getElementById("gastoDesc").value || "Gasto Geral";
     if(!v) return;
-
-    const { error } = await supabase.from('gastos_empresa').insert([{ valor: v, desc: d, data: new Date().toISOString() }]);
-    if(error) return alert("Erro ao salvar gasto: " + error.message);
-
+    await supabase.from('gastos_empresa').insert([{ valor: v, desc: d, data: new Date().toISOString() }]);
     document.getElementById("gastoValor").value="";
     document.getElementById("gastoDesc").value="";
     toast('💸 Gasto registrado!');
     await fetchDataFromSupabase();
 }
 
-async function removerGastoEmpresa(id){
-    const { error } = await supabase.from('gastos_empresa').delete().eq('id', id);
-    if(error) return alert("Erro ao deletar gasto: " + error.message);
-
-    toast('Gasto removido!');
-    await fetchDataFromSupabase();
-}
-
 function renderGeral(){
-    let totalG=0, totalT=0;
-    let ranking = [];
-    
+    let totalG=0, totalT=0; let ranking = [];
     let ini = new Date(document.getElementById('filtroInicio').value + 'T00:00:00');
     let fim = new Date(document.getElementById('filtroFim').value + 'T23:59:59');
-
-    listaMecanicos.forEach(m=>{
-        let r=calc(m.nome);
-        totalG+=r.ganhos;
-        totalT+=r.taxaValor;
-        ranking.push({nome: m.nome, faturamento: r.ganhos});
-    });
-
+    listaMecanicos.forEach(m=>{ let r=calc(m.nome); totalG+=r.ganhos; totalT+=r.taxaValor; ranking.push({nome: m.nome, faturamento: r.ganhos}); });
     ranking.sort((a,b) => b.faturamento - a.faturamento);
-
-    let gastosEmpFiltrados = listaGastosEmpresa.filter(g => {
-        let d = new Date(g.data);
-        return d >= ini && d <= fim;
-    });
-
-    let gastoEmp = gastosEmpFiltrados.reduce((a,b)=>a+b.valor,0);
-    let lucro = totalT - gastoEmp;
-    let totalServicosOficina = listaMecanicos.reduce((t,m)=>t+calc(m.nome).totalServicos,0);
-
-    document.getElementById("resumoGeral").innerHTML=`
-        <h3>📊 Balanço Geral Oficina (No Período)</h3>
-        <div class="saldo-destaque" style="color:${lucro >= 0 ? '#00e676':'#ff1744'}">🏢 Lucro Líquido: R$ ${lucro.toFixed(2)}</div>
-        <div>💰 Faturamento Total Bruto: R$ ${totalG.toFixed(2)}</div>
-        <div>📉 Retenção de Taxas (${taxa}%): R$ ${totalT.toFixed(2)}</div>
-        <div>🔧 Total de Serviços: ${totalServicosOficina}</div><div>💸 Gastos Operacionais: R$ ${gastoEmp.toFixed(2)}</div>
-        <button class="btn btn-warning" style="margin-top:15px;" onclick="window.print()">🖨️ Imprimir Balanço Geral</button>
-    `;
-
-    document.getElementById("rankingMecanicos").innerHTML=`<div style="overflow-x:auto">
-<table>
-<thead><tr>
-<th>#</th><th>Mecânico</th><th>Serviços</th><th>Produção</th><th>Vales</th><th>Retenção</th><th>Saldo</th>
-</tr></thead><tbody>
-${ranking.map((m,idx)=>{let r=calc(m.nome);return `<tr>
-<td>${idx+1}</td>
-<td>${m.nome}</td>
-<td>${r.totalServicos}</td>
-<td>R$ ${r.ganhos.toFixed(2)}</td>
-<td>R$ ${r.gastos.toFixed(2)}</td>
-<td>R$ ${r.taxaValor.toFixed(2)}</td>
-<td>R$ ${r.saldo.toFixed(2)}</td>
-</tr>`}).join('')}
-</tbody></table></div>`;
-
-    document.getElementById("listaGastosEmpresa").innerHTML = gastosEmpFiltrados.map(g=>`
-        <div class="item vale">
-            R$ ${g.valor.toFixed(2)} - ${g.desc} <br>
-            <span style="font-size:10px; color:var(--text-muted)">${new Date(g.data).toLocaleDateString()}</span>
-            <button class="btn btn-danger" style="padding:4px; margin-top:5px; font-size:12px;" onclick="removerGastoEmpresa(${g.id})">Excluir</button>
-        </div>
-    `).join("");
+    let gastosEmpFiltrados = listaGastosEmpresa.filter(g => { let d = new Date(g.data); return d >= ini && d <= fim; });
+    let gastoEmp = gastosEmpFiltrados.reduce((a,b)=>a+b.valor,0); let lucro = totalT - gastoEmp;
+    document.getElementById("resumoGeral").innerHTML=`<h3>📊 Balanço Geral</h3><div class="saldo-destaque">🏢 Lucro Líquido: R$ ${lucro.toFixed(2)}</div>`;
 }
 
-// Inicializar
 fetchDataFromSupabase();
 </script>
 </body>
