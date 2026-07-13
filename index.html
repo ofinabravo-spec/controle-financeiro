@@ -126,7 +126,8 @@
 
 <script>
 const SUPABASE_URL = 'https://pgftrljdbtnoeseljbog.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_V5O-twUL0jm-zeIrtnpd3Q_Cz4A1khY';
+// SUBSTITUA ABAIXO PELA SUA CHAVE COMPLETA QUE COMEÇA COM eyJhbGciOi...
+const SUPABASE_ANON_KEY = 'SUA_CHAVE_ANON_AQUI'; 
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let listaMecanicos = [];
@@ -189,17 +190,13 @@ async function addUser(){
     let telefone = document.getElementById("telefone").value.trim().replace(/\D/g, "");
     if(!nome) return alert("Digite o nome");
     
-    // Corrigido para incluir 'data_cadastro' explicitamente
     const { error } = await supabase.from('mecanicos').insert([{ 
         nome: nome, 
         telefone: telefone,
         data_cadastro: new Date().toISOString()
     }]);
     
-    if(error) {
-        console.error(error);
-        return alert("Erro ao salvar no banco: " + error.message);
-    }
+    if(error) return alert("Erro no banco: " + error.message);
 
     document.getElementById("nome").value = "";
     document.getElementById("telefone").value = "";
