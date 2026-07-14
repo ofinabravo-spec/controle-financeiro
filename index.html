@@ -53,15 +53,12 @@
         border-bottom-color: var(--accent);
         background: rgba(0, 230, 118, 0.05);
     }
-    
-    /* 2) Esconder o sistema até fazer login */
     .container {
         padding:15px;
         max-width:800px;
         margin:0 auto;
         display:none;
     }
-    
     .card {
         background: var(--bg-card);
         padding: 20px;
@@ -101,7 +98,6 @@
     .btn-primary { background: var(--primary); }
     .btn-warning { background: var(--warning); }
     .btn-danger { background: var(--danger); }
-    
     .item {
         background: var(--bg-input);
         padding: 12px;
@@ -112,18 +108,15 @@
     .item.vale { border-left-color: var(--danger); }
     .saldo-destaque { font-size: 24px; font-weight: bold; margin-bottom: 15px; color: var(--accent); }
     .hidden { display: none !important; }
-    
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     th, td { padding: 10px; border-bottom: 1px solid #2d3446; text-align: center; }
     th { color: var(--text-muted); font-size: 12px; }
-
     #toast {
         position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
         background: var(--accent); color: #000; padding: 12px 25px;
         border-radius: 30px; font-weight: bold; opacity: 0; transition: .3s; z-index: 999999;
     }
     #toast.show { opacity: 1; }
-
     @media print {
         body { background: white; color: black; }
         .tabs, input, select, button, .btn, .card:has(input), header, #loginBox { display: none !important; }
@@ -146,30 +139,22 @@ align-items:center;
 justify-content:center;
 z-index:99999;
 ">
-
 <div style="
 background:#161925;
 padding:30px;
 border-radius:15px;
 width:320px;
 ">
-
 <h2 style="text-align:center;color:white">
 🔐 Oficina Bravo
 </h2>
-
 <input id="emailLogin" placeholder="Email">
-
 <input id="senhaLogin" type="password" placeholder="Senha">
-
 <button class="btn btn-success" onclick="entrarSistema()">
 ENTRAR
 </button>
-
 <p id="erroLogin" style="color:#ff1744;text-align:center"></p>
-
 </div>
-
 </div>
 
 <header>📋 Controle Financeiro PRO</header>
@@ -194,7 +179,6 @@ ENTRAR
 </div>
 
 <div class="container">
-
     <div class="card">
         <h3>📅 Filtro de Período Geral</h3>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -264,15 +248,12 @@ ENTRAR
             <button class="btn btn-success" onclick="addGastoEmpresa()">➕ Registrar Gasto</button>
             <div id="listaGastosEmpresa" style="margin-top: 15px;"></div>
         </div>
-
         <div class="card" id="resumoGeral"></div>
-        
         <div class="card">
             <h3>🏆 Ranking de Mecânicos no Período</h3>
             <div id="rankingMecanicos"></div>
         </div>
     </div>
-
 </div>
 
 <div id="toast"></div>
@@ -283,47 +264,28 @@ ENTRAR
 const { createClient } = window.supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// 3) Adicionar a função de login
 let usuarioAtual=null;
 
-
 async function entrarSistema(){
-
 let email=document.getElementById("emailLogin").value;
 let senha=document.getElementById("senhaLogin").value;
 
-
 const {data,error}=await db.auth.signInWithPassword({
-
 email:email,
 password:senha
-
 });
 
-
 if(error){
-
 document.getElementById("erroLogin").innerHTML=
 "❌ Email ou senha inválidos";
-
 return;
-
 }
 
-
 usuarioAtual=data.user;
-
-
 document.getElementById("loginBox").style.display="none";
-
 document.querySelector(".container").style.display="block";
-
-
 toast("✅ Login realizado");
-
-
 fetchDataFromSupabase();
-
 }
 
 let listaMecanicos = [];
@@ -333,7 +295,6 @@ let taxa = 20;
 let chart;
 let currentTab = "individual";
 
-// Inicialização das datas padrão (Mês Atual)
 const hoje = new Date();
 document.getElementById('filtroInicio').value = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
 document.getElementById('filtroFim').value = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0];
@@ -349,28 +310,22 @@ function show(type){
     currentTab = type;
     document.getElementById("individualBox").classList.toggle("hidden", type!=="individual");
     document.getElementById("geralBox").classList.toggle("hidden", type!=="geral");
-    
     document.getElementById("tab-ind").classList.toggle("active", type==="individual");
     document.getElementById("tab-ger").classList.toggle("active", type==="geral");
-
     globalRefresh();
 }
 
 async function fetchDataFromSupabase() {
     try {
-        // Carrega mecânicos
         let { data: mec, error: errMec } = await db.from('mecanicos').select('*');
         if (!errMec) listaMecanicos = mec || [];
 
-        // Carrega lançamentos
         let { data: lan, error: errLan } = await db.from('lancamentos').select('*');
         if (!errLan) listaLancamentos = lan || [];
 
-        // Carrega gastos da oficina
         let { data: gas, error: errGas } = await db.from('gastos_empresa').select('*');
         if (!errGas) listaGastosEmpresa = gas || [];
 
-        // Carrega taxa configurada
         let { data: config, error: errConf } = await db.from('configuracoes').select('*').eq('chave', 'taxa_retencao').single();
         if (!errConf && config) {
             taxa = Number(config.valor);
@@ -395,14 +350,11 @@ function globalRefresh() {
 
 async function salvarTaxa(){
     const inputTaxa = Number(document.getElementById("taxa").value);
-    
     const { error } = await db.from('configuracoes').upsert(
         { chave: 'taxa_retencao', valor: inputTaxa.toString() },
         { onConflict: 'chave' }
     );
-
     if (error) return alert("Erro ao salvar taxa: " + error.message);
-    
     taxa = inputTaxa;
     toast('✅ Taxa atualizada!');
     globalRefresh();
@@ -411,7 +363,6 @@ async function salvarTaxa(){
 async function addUser(){
     let nome = document.getElementById("nome").value.trim();
     let telefone = document.getElementById("telefone").value.trim().replace(/\D/g, "");
-
     if(!nome) return alert("Digite o nome do mecânico");
 
     const { error } = await db.from('mecanicos').insert([{
@@ -419,7 +370,6 @@ async function addUser(){
         telefone: telefone || null,
         data_cadastro: new Date().toISOString()
     }]);
-
     if (error) return alert("Erro ao salvar mecânico: " + error.message);
 
     document.getElementById("nome").value = "";
@@ -433,7 +383,6 @@ async function addPayment(){
     let valor = Number(document.getElementById("valor").value);
     let tipo = document.getElementById("tipo").value;
     let desc = document.getElementById("desc").value || "Sem descrição";
-
     if(!user || !valor) return alert("Selecione o mecânico e informe o valor");
 
     const { error } = await db.from('lancamentos').insert([{
@@ -443,7 +392,6 @@ async function addPayment(){
         desc: desc,
         data: new Date().toISOString()
     }]);
-
     if (error) return alert("Erro ao gravar lançamento: " + error.message);
 
     document.getElementById("valor").value = "";
@@ -476,7 +424,6 @@ async function pagarUser(nome){
     if(confirm(`Zerar o histórico completo de lançamentos de ${nome} no banco de dados?`)){
         const { error } = await db.from('lancamentos').delete().eq('mecanico', nome);
         if (error) return alert("Erro ao limpar dados: " + error.message);
-        
         toast('✔ Conta fechada!');
         await fetchDataFromSupabase();
     }
@@ -486,7 +433,6 @@ async function deleteItem(user, id){
     if(confirm("Tem certeza que deseja excluir este lançamento?")) {
         const { error } = await db.from('lancamentos').delete().eq('id', id);
         if (error) return alert("Erro ao remover: " + error.message);
-        
         toast('🗑️ Item removido!');
         await fetchDataFromSupabase();
     }
@@ -498,7 +444,6 @@ async function editItem(user, id){
 
     let valor = prompt("Novo valor:", item.valor);
     let desc = prompt("Nova descrição:", item.desc);
-
     if (valor === null && desc === null) return;
     
     let dadosAtualizados = {};
@@ -516,7 +461,6 @@ function enviarWhatsApp(nome){
     let r = calc(nome);
     let mecObj = listaMecanicos.find(m => m.nome === nome);
     let fone = mecObj ? mecObj.telefone : null;
-    
     if(!fone) return alert("Não há telefone cadastrado para este mecânico.");
 
     let texto = `*Resumo Financeiro - ${nome}*\n\n` +
@@ -526,7 +470,6 @@ function enviarWhatsApp(nome){
                 `📉 *Taxa Oficina (${taxa}%):* R$ ${r.taxaValor.toFixed(2)}\n` +
                 `-----------------------------\n` +
                 `💵 *Saldo Líquido a Receber:* R$ ${r.saldo.toFixed(2)}`;
-    
     window.open(`https://api.whatsapp.com/send?phone=${fone}&text=${encodeURIComponent(texto)}`, '_blank');
 }
 
@@ -535,7 +478,6 @@ function renderUser(nome){
     let r = calc(nome);
 
     if(chart) chart.destroy();
-    
     chart = new Chart(document.getElementById("chart"),{
         type:"bar",
         data:{
@@ -607,7 +549,6 @@ async function addGastoEmpresa(){
         desc: d,
         data: new Date().toISOString()
     }]);
-
     if(error) return alert("Erro ao registrar gasto: " + error.message);
 
     document.getElementById("gastoValor").value="";
@@ -620,7 +561,6 @@ async function removerGastoEmpresa(id){
     if(confirm("Deseja excluir este gasto operacional?")) {
         const { error } = await db.from('gastos_empresa').delete().eq('id', id);
         if(error) return alert("Erro ao remover gasto: " + error.message);
-        
         toast('🗑️ Gasto removido!');
         await fetchDataFromSupabase();
     }
@@ -629,7 +569,6 @@ async function removerGastoEmpresa(id){
 function renderGeral(){
     let totalG=0, totalT=0;
     let ranking = [];
-    
     let ini = new Date(document.getElementById('filtroInicio').value + 'T00:00:00');
     let fim = new Date(document.getElementById('filtroFim').value + 'T23:59:59');
 
@@ -685,7 +624,6 @@ ${ranking.map((m,idx)=>{let r=calc(m.nome);return `<tr>
     `).join("");
 }
 
-// 4) Alterar a inicialização final
 show("individual");
 </script>
 </body>
