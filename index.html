@@ -53,7 +53,15 @@
         border-bottom-color: var(--accent);
         background: rgba(0, 230, 118, 0.05);
     }
-    .container { padding: 15px; max-width: 800px; margin: 0 auto; }
+    
+    /* 2) Esconder o sistema até fazer login */
+    .container {
+        padding:15px;
+        max-width:800px;
+        margin:0 auto;
+        display:none;
+    }
+    
     .card {
         background: var(--bg-card);
         padding: 20px;
@@ -112,19 +120,57 @@
     #toast {
         position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
         background: var(--accent); color: #000; padding: 12px 25px;
-        border-radius: 30px; font-weight: bold; opacity: 0; transition: .3s; z-index: 9999;
+        border-radius: 30px; font-weight: bold; opacity: 0; transition: .3s; z-index: 999999;
     }
     #toast.show { opacity: 1; }
 
     @media print {
         body { background: white; color: black; }
-        .tabs, input, select, button, .btn, .card:has(input), header { display: none !important; }
+        .tabs, input, select, button, .btn, .card:has(input), header, #loginBox { display: none !important; }
         .card { background: white; color: black; box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; }
         .item { background: #f5f5f5; color: black; border: 1px solid #ddd; }
     }
 </style>
 </head>
 <body>
+
+<div id="loginBox" style="
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#0f111a;
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:99999;
+">
+
+<div style="
+background:#161925;
+padding:30px;
+border-radius:15px;
+width:320px;
+">
+
+<h2 style="text-align:center;color:white">
+🔐 Oficina Bravo
+</h2>
+
+<input id="emailLogin" placeholder="Email">
+
+<input id="senhaLogin" type="password" placeholder="Senha">
+
+<button class="btn btn-success" onclick="entrarSistema()">
+ENTRAR
+</button>
+
+<p id="erroLogin" style="color:#ff1744;text-align:center"></p>
+
+</div>
+
+</div>
 
 <header>📋 Controle Financeiro PRO</header>
 <button onclick="history.back()" style="
@@ -231,12 +277,54 @@
 
 <div id="toast"></div>
 
+<script src="config.js"></script>
+
 <script>
-// Chaves e Inicialização Corretas do Supabase ("financeira oficina")
-const SUPABASE_URL = 'https://spampthijhzrobleoqrk.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_WTdbepY0NYEQ6gERzWAlKQ_OEbOhqVK';
 const { createClient } = window.supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// 3) Adicionar a função de login
+let usuarioAtual=null;
+
+
+async function entrarSistema(){
+
+let email=document.getElementById("emailLogin").value;
+let senha=document.getElementById("senhaLogin").value;
+
+
+const {data,error}=await db.auth.signInWithPassword({
+
+email:email,
+password:senha
+
+});
+
+
+if(error){
+
+document.getElementById("erroLogin").innerHTML=
+"❌ Email ou senha inválidos";
+
+return;
+
+}
+
+
+usuarioAtual=data.user;
+
+
+document.getElementById("loginBox").style.display="none";
+
+document.querySelector(".container").style.display="block";
+
+
+toast("✅ Login realizado");
+
+
+fetchDataFromSupabase();
+
+}
 
 let listaMecanicos = [];
 let listaLancamentos = [];
@@ -385,7 +473,7 @@ function calc(nome){
 }
 
 async function pagarUser(nome){
-    if(confirm(Zerar o histórico completo de lançamentos de ${nome} no banco de dados?)){
+    if(confirm(`Zerar o histórico completo de lançamentos de ${nome} no banco de dados?`)){
         const { error } = await db.from('lancamentos').delete().eq('mecanico', nome);
         if (error) return alert("Erro ao limpar dados: " + error.message);
         
@@ -431,15 +519,15 @@ function enviarWhatsApp(nome){
     
     if(!fone) return alert("Não há telefone cadastrado para este mecânico.");
 
-    let texto = *Resumo Financeiro - ${nome}*\n\n +
-                📅 Período: ${document.getElementById('filtroInicio').value} até ${document.getElementById('filtroFim').value}\n +
-                💰 *Ganhos Brutos:* R$ ${r.ganhos.toFixed(2)}\n +
-                🧾 *Vales/Gastos:* R$ ${r.gastos.toFixed(2)}\n +
-                📉 *Taxa Oficina (${taxa}%):* R$ ${r.taxaValor.toFixed(2)}\n +
-                -----------------------------\n +
-                💵 *Saldo Líquido a Receber:* R$ ${r.saldo.toFixed(2)};
+    let texto = `*Resumo Financeiro - ${nome}*\n\n` +
+                `📅 Período: ${document.getElementById('filtroInicio').value} até ${document.getElementById('filtroFim').value}\n` +
+                `💰 *Ganhos Brutos:* R$ ${r.ganhos.toFixed(2)}\n` +
+                `🧾 *Vales/Gastos:* R$ ${r.gastos.toFixed(2)}\n` +
+                `📉 *Taxa Oficina (${taxa}%):* R$ ${r.taxaValor.toFixed(2)}\n` +
+                `-----------------------------\n` +
+                `💵 *Saldo Líquido a Receber:* R$ ${r.saldo.toFixed(2)}`;
     
-    window.open(https://api.whatsapp.com/send?phone=${fone}&text=${encodeURIComponent(texto)}, '_blank');
+    window.open(`https://api.whatsapp.com/send?phone=${fone}&text=${encodeURIComponent(texto)}`, '_blank');
 }
 
 function renderUser(nome){
@@ -461,7 +549,7 @@ function renderUser(nome){
         options: { responsive: true, plugins: { legend: { display: false } } }
     });
 
-    document.getElementById("resumo").innerHTML=
+    document.getElementById("resumo").innerHTML=`
         <div class="saldo-destaque">👤 ${nome}</div>
         <div class="saldo-destaque" style="color:${r.saldo >= 0 ? '#00e676':'#ff1744'}">💵 Saldo Líquido: R$ ${r.saldo.toFixed(2)}</div>
         <div style="margin-bottom: 15px;">
@@ -474,9 +562,9 @@ function renderUser(nome){
             <button class="btn btn-warning" onclick="window.print()">🖨️ Exportar Período</button>
         </div>
         <button class="btn btn-danger" style="margin-top:10px;" onclick="pagarUser('${nome}')">✔ Fechar Conta / Zerar Histórico</button>
-    ;
+    `;
 
-    document.getElementById("listaLancamentos").innerHTML = r.filtrados.map(i=>
+    document.getElementById("listaLancamentos").innerHTML = r.filtrados.map(i=>`
         <div class="item ${i.tipo}">
             <strong>${i.tipo === 'vale' ? '🧾 GASTO/VALE' : '➕ GANHO'}</strong> - R$ ${i.valor.toFixed(2)}<br>
             <small>${i.desc}</small> <br>
@@ -486,7 +574,7 @@ function renderUser(nome){
                 <button class="btn btn-danger" style="padding:4px; font-size:12px;" onclick="deleteItem('${i.mecanico}',${i.id})">Excluir</button>
             </div>
         </div>
-    ).join("");
+    `).join("");
 }
 
 function autoRender(){
@@ -563,21 +651,21 @@ function renderGeral(){
     let lucro = totalT - gastoEmp;
     let totalServicosOficina = listaMecanicos.reduce((t,m)=>t+calc(m.nome).totalServicos,0);
 
-    document.getElementById("resumoGeral").innerHTML=
+    document.getElementById("resumoGeral").innerHTML=`
         <h3>📊 Balanço Geral Oficina (No Período)</h3>
         <div class="saldo-destaque" style="color:${lucro >= 0 ? '#00e676':'#ff1744'}">🏢 Lucro Líquido: R$ ${lucro.toFixed(2)}</div>
         <div>💰 Faturamento Total Bruto: R$ ${totalG.toFixed(2)}</div>
         <div>📉 Retenção de Taxas (${taxa}%): R$ ${totalT.toFixed(2)}</div>
         <div>🔧 Total de Serviços: ${totalServicosOficina}</div><div>💸 Gastos Operacionais: R$ ${gastoEmp.toFixed(2)}</div>
         <button class="btn btn-warning" style="margin-top:15px;" onclick="window.print()">🖨️ Imprimir Balanço Geral</button>
-    ;
+    `;
 
-    document.getElementById("rankingMecanicos").innerHTML=<div style="overflow-x:auto">
+    document.getElementById("rankingMecanicos").innerHTML=`<div style="overflow-x:auto">
 <table style="width:100%;border-collapse:collapse">
 <thead><tr>
 <th>#</th><th>Mecânico</th><th>Serviços</th><th>Produção</th><th>Vales</th><th>Retenção</th><th>Saldo</th>
 </tr></thead><tbody>
-${ranking.map((m,idx)=>{let r=calc(m.nome);return <tr>
+${ranking.map((m,idx)=>{let r=calc(m.nome);return `<tr>
 <td>${idx+1}</td>
 <td>${m.nome}</td>
 <td>${r.totalServicos}</td>
@@ -585,20 +673,19 @@ ${ranking.map((m,idx)=>{let r=calc(m.nome);return <tr>
 <td>R$ ${r.gastos.toFixed(2)}</td>
 <td>R$ ${r.taxaValor.toFixed(2)}</td>
 <td>R$ ${r.saldo.toFixed(2)}</td>
-</tr>}).join('')}
-</tbody></table></div>;
+</tr>`}).join('')}
+</tbody></table></div>`;
 
-    document.getElementById("listaGastosEmpresa").innerHTML = gastosEmpFiltrados.map(g=>
+    document.getElementById("listaGastosEmpresa").innerHTML = gastosEmpFiltrados.map(g=>`
         <div class="item vale">
             R$ ${g.valor.toFixed(2)} - ${g.desc} <br>
             <span style="font-size:10px; color:var(--text-muted)">${new Date(g.data).toLocaleDateString()}</span>
             <button class="btn btn-danger" style="padding:4px; margin-top:5px; font-size:12px;" onclick="removerGastoEmpresa(${g.id})">Excluir</button>
         </div>
-    ).join("");
+    `).join("");
 }
 
-// Inicializa a busca inicial dos dados
-fetchDataFromSupabase();
+// 4) Alterar a inicialização final
 show("individual");
 </script>
 </body>
