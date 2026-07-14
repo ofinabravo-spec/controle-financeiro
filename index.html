@@ -53,7 +53,6 @@
         border-bottom-color: var(--accent);
         background: rgba(0, 230, 118, 0.05);
     }
-    /* O container começa escondido até a autenticação passar */
     .container { 
         display: none; 
         padding: 15px; 
@@ -79,7 +78,6 @@
         color: white;
         box-sizing: border-box;
     }
-    /* Estilos dos inputs do painel de Login */
     #loginBox input[type="email"], #loginBox input[type="password"] {
         width: 100%;
         padding: 12px;
@@ -141,6 +139,25 @@
         border-radius: 30px; font-weight: bold; opacity: 0; transition: .3s; z-index: 9999;
     }
     #toast.show { opacity: 1; }
+
+    /* MODAL EXCLUSIVO PARA COMPATIBILIDADE COM APLICATIVOS */
+    .custom-modal {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 100000;
+    }
+    .modal-content {
+        background: var(--bg-card);
+        padding: 25px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
 
     @media print {
         body { background: white; color: black; }
@@ -292,17 +309,40 @@
 
 </div>
 
+<div id="modalConfirmacao" class="custom-modal">
+    <div class="modal-content">
+        <h3 id="modalConfirmTitulo">Confirmar ação</h3>
+        <p id="modalConfirmTexto" style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;"></p>
+        <div class="btn-group">
+            <button class="btn btn-danger" id="modalConfirmBtnSim">Confirmar</button>
+            <button class="btn" style="background:#555" onclick="fecharModal('modalConfirmacao')">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalEdicao" class="custom-modal">
+    <div class="modal-content">
+        <h3>✏️ Editar Lançamento</h3>
+        <label>Valor (R$)</label>
+        <input type="number" id="editModalValor">
+        <label>Descrição</label>
+        <input type="text" id="editModalDesc">
+        <div class="btn-group">
+            <button class="btn btn-success" id="modalEditBtnSalvar">Salvar</button>
+            <button class="btn" style="background:#555" onclick="fecharModal('modalEdicao')">Cancelar</button>
+        </div>
+    </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
-// Chaves e Inicialização Direta do Supabase
 const SUPABASE_URL = 'https://spampthijhzrobleoqrk.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_WTdbepY0NYEQ6gERzWAlKQ_OEbOhqVK';
 
-// Chamada direta para criar o cliente com persistência de dados ativa
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
-        persistSession: true, // Mantém a sessão ativa no navegador
+        persistSession: true,
         autoRefreshToken: true
     }
 });
@@ -315,15 +355,33 @@ let chart;
 let currentTab = "individual";
 let usuarioAtual = null;
 
-// Inicialização das datas padrão (Mês Atual)
 const hoje = new Date();
 document.getElementById('filtroInicio').value = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
 document.getElementById('filtroFim').value = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0];
 
-// Função que valida a sessão e recupera credenciais salvas localmente
+// Auxiliares para controle dos modais de forma assíncrona
+function abrirModal(id) {
+    document.getElementById(id).style.display = 'flex';
+}
+function fecharModal(id) {
+    document.getElementById(id).style.display = 'none';
+}
+
+function customConfirm(titulo, mensagem) {
+    return new Promise((resolve) => {
+        document.getElementById('modalConfirmTitulo').innerText = titulo;
+        document.getElementById('modalConfirmTexto').innerText = mensagem;
+        abrirModal('modalConfirmacao');
+        
+        document.getElementById('modalConfirmBtnSim').onclick = function() {
+            fecharModal('modalConfirmacao');
+            resolve(true);
+        };
+    });
+}
+
 async function verificarSessaoAtiva() {
     try {
-        // Verifica se há dados de e-mail e senha salvos no LocalStorage para preenchimento rápido
         const savedEmail = localStorage.getItem("oficina_email");
         const savedPass = localStorage.getItem("oficina_senha");
         
@@ -349,7 +407,6 @@ async function verificarSessaoAtiva() {
     }
 }
 
-// Lógica de Login integrada com salvamento de dados opcional
 async function entrarSistema(event) {
     if (event) event.preventDefault();
 
@@ -371,7 +428,6 @@ async function entrarSistema(event) {
         return;
     }
 
-    // Se o "Lembrar meus dados" estiver marcado, armazena no LocalStorage
     if (lembrarCheckbox) {
         localStorage.setItem("oficina_email", email);
         localStorage.setItem("oficina_senha", senha);
@@ -387,12 +443,10 @@ async function entrarSistema(event) {
     await fetchDataFromSupabase();
 }
 
-// Desconectar o usuário e apagar sessão (mantendo os dados salvos no input se o check estiver ativo)
 async function sairSistema() {
     await db.auth.signOut();
     usuarioAtual = null;
     
-    // Se não tiver marcado para lembrar, limpa os campos de texto
     if (!document.getElementById("lembrar").checked) {
         document.getElementById("emailLogin").value = "";
         document.getElementById("senhaLogin").value = "";
@@ -534,7 +588,8 @@ function calc(nome){
 }
 
 async function pagarUser(nome){
-    if(confirm(`Zerar o histórico completo de lançamentos de ${nome} no banco de dados?`)){
+    let confirmacao = await customConfirm("Fechar Conta", `Deseja zerar o histórico completo de lançamentos de ${nome} no banco de dados?`);
+    if(confirmacao){
         const { error } = await db.from('lancamentos').delete().eq('mecanico', nome);
         if (error) return alert("Erro ao limpar dados: " + error.message);
         
@@ -544,7 +599,8 @@ async function pagarUser(nome){
 }
 
 async function deleteItem(user, id){
-    if(confirm("Tem certeza que deseja excluir este lançamento?")) {
+    let confirmacao = await customConfirm("Excluir Item", "Tem certeza que deseja excluir este lançamento permanentemente?");
+    if(confirmacao) {
         const { error } = await db.from('lancamentos').delete().eq('id', id);
         if (error) return alert("Erro ao remover: " + error.message);
         
@@ -553,24 +609,35 @@ async function deleteItem(user, id){
     }
 }
 
-async function editItem(user, id){
-    let item = listaLancamentos.find(x=>x.id===id);
+function editItem(user, id){
+    let item = listaLancamentos.find(x => x.id === id);
     if(!item) return;
 
-    let valor = prompt("Novo valor:", item.valor);
-    let desc = prompt("Nova descrição:", item.desc);
+    document.getElementById("editModalValor").value = item.valor;
+    document.getElementById("editModalDesc").value = item.desc;
+    abrirModal('modalEdicao');
 
-    if (valor === null && desc === null) return;
-    
-    let dadosAtualizados = {};
-    if(valor !== null) dadosAtualizados.valor = Number(valor);
-    if(desc !== null) dadosAtualizados.desc = desc;
+    document.getElementById("modalEditBtnSalvar").onclick = async function() {
+        let novoValor = Number(document.getElementById("editModalValor").value);
+        let novaDesc = document.getElementById("editModalDesc").value;
 
-    const { error } = await db.from('lancamentos').update(dadosAtualizados).eq('id', id);
-    if (error) return alert("Erro ao atualizar: " + error.message);
+        if(!novoValor || !novaDesc) return alert("Preencha todos os campos!");
 
-    toast('✏️ Item atualizado!');
-    await fetchDataFromSupabase();
+        let dadosAtualizados = {
+            valor: novoValor,
+            desc: novaDesc
+        };
+
+        const { error } = await db.from('lancamentos').update(dadosAtualizados).eq('id', id);
+        if (error) {
+            alert("Erro ao atualizar: " + error.message);
+            return;
+        }
+
+        fecharModal('modalEdicao');
+        toast('✏️ Item atualizado!');
+        await fetchDataFromSupabase();
+    };
 }
 
 function enviarWhatsApp(nome){
@@ -678,7 +745,8 @@ async function addGastoEmpresa(){
 }
 
 async function removerGastoEmpresa(id){
-    if(confirm("Deseja excluir este gasto operacional?")) {
+    let confirmacao = await customConfirm("Excluir Gasto", "Deseja realmente excluir este gasto operacional da empresa?");
+    if(confirmacao) {
         const { error } = await db.from('gastos_empresa').delete().eq('id', id);
         if(error) return alert("Erro ao remover gasto: " + error.message);
         
@@ -746,7 +814,6 @@ ${ranking.map((m,idx)=>{let r=calc(m.nome);return `<tr>
     `).join("");
 }
 
-// Inicializa e verifica a sessão ativa do usuário assim que abre a página
 verificarSessaoAtiva();
 show("individual");
 </script>
