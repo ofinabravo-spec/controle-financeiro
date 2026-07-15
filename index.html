@@ -407,7 +407,7 @@ function customConfirm(titulo, mensagem) {
     });
 }
 
-// 🔊 Função para tocar um som sutil de notificação nativa
+// 🔊 Som de notificação
 function tocarSomNotificacao() {
     try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -416,7 +416,7 @@ function tocarSomNotificacao() {
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
         oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // Nota Ré (D5)
+        oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime);
         gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
         oscillator.start();
         oscillator.stop(audioCtx.currentTime + 0.15);
@@ -425,7 +425,7 @@ function tocarSomNotificacao() {
     }
 }
 
-// 📱 Mostra alerta na tela
+// 📱 Alerta Realtime
 function mostrarAlertaRealtime(texto) {
     tocarSomNotificacao();
     const alertBox = document.getElementById("realtime-alert");
@@ -436,11 +436,11 @@ function mostrarAlertaRealtime(texto) {
     }, 4500);
 }
 
-// ⚡ ATIVAR O REALTIME DO SUPABASE NO FRONTEND
+// ⚡ Ativar Realtime Supabase
 function inicializarRealtime() {
     db.channel('mudancas_oficina')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'lancamentos' }, async (payload) => {
-        await fetchDataFromSupabase(); // Atualiza a tela localmente
+        await fetchDataFromSupabase();
         
         if (payload.eventType === 'INSERT') {
             mostrarAlertaRealtime(`Novo lançamento: R$ ${payload.new.valor.toFixed(2)} (${payload.new.desc})`);
@@ -477,7 +477,7 @@ async function verificarSessaoAtiva() {
             document.getElementById("loginBox").style.display = "none";
             document.querySelector(".container").style.display = "block";
             await fetchDataFromSupabase();
-            inicializarRealtime(); // Ativa o escutador em tempo real após logar
+            inicializarRealtime();
         } else {
             document.getElementById("loginBox").style.display = "flex";
             document.querySelector(".container").style.display = "none";
@@ -614,7 +614,7 @@ async function addUser(){
         nome: nome,
         telefone: telefone || null,
         data_cadastro: new Date().toISOString()
-    }]);
+     }]);
 
     if (error) return alert("Erro ao salvar mecânico: " + error.message);
 
@@ -721,6 +721,7 @@ function editItem(user, id){
     };
 }
 
+// 💬 ENVIAR VIA WHATSAPP (CORRIGIDO PARA O APK NATIVO)
 function enviarWhatsApp(nome){
     let r = calc(nome);
     let mecObj = listaMecanicos.find(m => m.nome === nome);
@@ -729,14 +730,35 @@ function enviarWhatsApp(nome){
     if(!fone) return alert("Não há telefone cadastrado para este mecânico.");
 
     let text = `*Resumo Financeiro - ${nome}*\n\n` +
-                `📅 Período: ${document.getElementById('filtroInicio').value} até ${document.getElementById('filtroFim').value}\n` +
-                `💰 *Ganhos Brutos:* R$ ${r.ganhos.toFixed(2)}\n` +
-                `🧾 *Vales/Gastos:* R$ ${r.gastos.toFixed(2)}\n` +
-                `📉 *Taxa Oficina (${taxa}%):* R$ ${r.taxaValor.toFixed(2)}\n` +
-                `-----------------------------\n` +
-                `💵 *Saldo Líquido a Receber:* R$ ${r.saldo.toFixed(2)}`;
+               `📅 Período: ${document.getElementById('filtroInicio').value} até ${document.getElementById('filtroFim').value}\n` +
+               `💰 *Ganhos Brutos:* R$ ${r.ganhos.toFixed(2)}\n` +
+               `🧾 *Vales/Gastos:* R$ ${r.gastos.toFixed(2)}\n` +
+               `📉 *Taxa Oficina (${taxa}%):* R$ ${r.taxaValor.toFixed(2)}\n` +
+               `-----------------------------\n` +
+               `💵 *Saldo Líquido a Receber:* R$ ${r.saldo.toFixed(2)}`;
     
-    window.open(`https://api.whatsapp.com/send?phone=${fone}&text=${encodeURIComponent(text)}`, '_blank');
+    // Tenta primeiro através de uma possível ponte nativa do APK
+    if (typeof AndroidInterface !== 'undefined' && AndroidInterface.compartilharTexto) {
+        AndroidInterface.compartilharTexto(fone, text);
+    } else if (typeof window.Android !== 'undefined' && window.Android.compartilharTexto) {
+        window.Android.compartilharTexto(fone, text);
+    } else {
+        // Fallback robusto que abre diretamente o app do WhatsApp no celular
+        window.open(`https://api.whatsapp.com/send?phone=${fone}&text=${encodeURIComponent(text)}`, '_blank');
+    }
+}
+
+// 🖨️ IMPRIMIR / EXPORTAR PERÍODO (CORRIGIDO PARA O APK NATIVO)
+function dispararImpressao() {
+    // Se estiver rodando dentro do WebView com ponte de impressão nativa
+    if (typeof AndroidInterface !== 'undefined' && AndroidInterface.imprimir) {
+        AndroidInterface.imprimir();
+    } else if (typeof window.Android !== 'undefined' && window.Android.imprimir) {
+        window.Android.imprimir();
+    } else {
+        // Fallback padrão de navegadores
+        window.print();
+    }
 }
 
 function renderUser(nome){
@@ -768,7 +790,7 @@ function renderUser(nome){
         </div>
         <div class="btn-group">
             <button class="btn btn-primary" onclick="enviarWhatsApp('${nome}')">💬 Enviar WhatsApp</button>
-            <button class="btn btn-warning" onclick="window.print()">🖨️ Exportar Período</button>
+            <button class="btn btn-warning" onclick="dispararImpressao()">🖨️ Exportar Período</button>
         </div>
         <button class="btn btn-danger" style="margin-top:10px;" onclick="pagarUser('${nome}')">✔ Fechar Conta / Zerar Histórico</button>
     `;
@@ -867,7 +889,7 @@ function renderGeral(){
         <div>💰 Faturamento Total Bruto: R$ ${totalG.toFixed(2)}</div>
         <div>📉 Retenção de Taxas (${taxa}%): R$ ${totalT.toFixed(2)}</div>
         <div>🔧 Total de Serviços: ${totalServicosOficina}</div><div>💸 Gastos Operacionais: R$ ${gastoEmp.toFixed(2)}</div>
-        <button class="btn btn-warning" style="margin-top:15px;" onclick="window.print()">🖨️ Imprimir Balanço Geral</button>
+        <button class="btn btn-warning" style="margin-top:15px;" onclick="dispararImpressao()">🖨️ Imprimir Balanço Geral</button>
     `;
 
     document.getElementById("rankingMecanicos").innerHTML=`<div style="overflow-x:auto">
