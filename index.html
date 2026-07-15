@@ -140,7 +140,30 @@
     }
     #toast.show { opacity: 1; }
 
-    /* MODAL EXCLUSIVO PARA COMPATIBILIDADE COM APLICATIVOS */
+    /* Estilo do Alerta Flutuante Realtime */
+    #realtime-alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #1e88e5;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+        display: none;
+        align-items: center;
+        gap: 12px;
+        z-index: 110000;
+        font-weight: bold;
+        border-left: 5px solid #00e676;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+
     .custom-modal {
         position: fixed;
         top: 0; left: 0; width: 100%; height: 100%;
@@ -168,6 +191,11 @@
 </style>
 </head>
 <body>
+
+<div id="realtime-alert">
+    <span>🔔</span>
+    <span id="realtime-alert-text">Novo lançamento registrado!</span>
+</div>
 
 <div id="loginBox" style="
     position: fixed;
@@ -359,7 +387,6 @@ const hoje = new Date();
 document.getElementById('filtroInicio').value = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
 document.getElementById('filtroFim').value = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0];
 
-// Auxiliares para controle dos modais de forma assíncrona
 function abrirModal(id) {
     document.getElementById(id).style.display = 'flex';
 }
@@ -380,6 +407,58 @@ function customConfirm(titulo, mensagem) {
     });
 }
 
+// 🔊 Função para tocar um som sutil de notificação nativa
+function tocarSomNotificacao() {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // Nota Ré (D5)
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.15);
+    } catch(e) {
+        console.log("AudioContext bloqueado ou sem suporte");
+    }
+}
+
+// 📱 Mostra alerta na tela
+function mostrarAlertaRealtime(texto) {
+    tocarSomNotificacao();
+    const alertBox = document.getElementById("realtime-alert");
+    document.getElementById("realtime-alert-text").innerText = texto;
+    alertBox.style.display = "flex";
+    setTimeout(() => {
+        alertBox.style.display = "none";
+    }, 4500);
+}
+
+// ⚡ ATIVAR O REALTIME DO SUPABASE NO FRONTEND
+function inicializarRealtime() {
+    db.channel('mudancas_oficina')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'lancamentos' }, async (payload) => {
+        await fetchDataFromSupabase(); // Atualiza a tela localmente
+        
+        if (payload.eventType === 'INSERT') {
+            mostrarAlertaRealtime(`Novo lançamento: R$ ${payload.new.valor.toFixed(2)} (${payload.new.desc})`);
+        } else if (payload.eventType === 'DELETE') {
+            mostrarAlertaRealtime(`Um lançamento foi removido!`);
+        } else if (payload.eventType === 'UPDATE') {
+            mostrarAlertaRealtime(`Lançamento editado: R$ ${payload.new.valor.toFixed(2)}`);
+        }
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'mecanicos' }, async (payload) => {
+        await fetchDataFromSupabase();
+        if (payload.eventType === 'INSERT') {
+            mostrarAlertaRealtime(`👤 Novo mecânico cadastrado: ${payload.new.nome}`);
+        }
+    })
+    .subscribe();
+}
+
 async function verificarSessaoAtiva() {
     try {
         const savedEmail = localStorage.getItem("oficina_email");
@@ -398,6 +477,7 @@ async function verificarSessaoAtiva() {
             document.getElementById("loginBox").style.display = "none";
             document.querySelector(".container").style.display = "block";
             await fetchDataFromSupabase();
+            inicializarRealtime(); // Ativa o escutador em tempo real após logar
         } else {
             document.getElementById("loginBox").style.display = "flex";
             document.querySelector(".container").style.display = "none";
@@ -441,6 +521,7 @@ async function entrarSistema(event) {
     document.querySelector(".container").style.display = "block";
     toast("✅ Login realizado com sucesso!");
     await fetchDataFromSupabase();
+    inicializarRealtime();
 }
 
 async function sairSistema() {
