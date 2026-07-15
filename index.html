@@ -1,1110 +1,924 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Oficina Bravo - Sistema Online Supabase</title>
-
+<title>Controle Financeiro PRO (Supabase)</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-/* --- ESTILOS GERAIS DE DESIGN --- */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: Arial, sans-serif;
-}
+    :root {
+        --bg-main: #0f111a;
+        --bg-card: #161925;
+        --bg-input: #23283b;
+        --accent: #00e676;
+        --primary: #2979ff;
+        --warning: #ff9100;
+        --danger: #ff1744;
+        --text: #ffffff;
+        --text-muted: #a0aec0;
+    }
+    body {
+        margin: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: var(--bg-main);
+        color: var(--text);
+    }
+    header {
+        background: var(--bg-card);
+        padding: 20px;
+        text-align: center;
+        font-size: 22px;
+        font-weight: bold;
+        border-bottom: 2px solid #202538;
+    }
+    .tabs {
+        display: flex;
+        background: var(--bg-card);
+        margin-bottom: 15px;
+    }
+    .tabs button {
+        flex: 1;
+        padding: 15px;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+        border-bottom: 3px solid transparent;
+    }
+    .tabs button.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+        background: rgba(0, 230, 118, 0.05);
+    }
+    .container { 
+        display: none; 
+        padding: 15px; 
+        max-width: 800px; 
+        margin: 0 auto; 
+    }
+    .card {
+        background: var(--bg-card);
+        padding: 20px;
+        margin-bottom: 15px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+    h3 { margin-top: 0; margin-bottom: 15px; font-size: 18px; color: var(--text); display: flex; align-items: center; gap: 8px;}
+    label { font-size: 12px; color: var(--text-muted); display: block; margin-top: 8px; }
+    input, select {
+        width: 100%;
+        padding: 12px;
+        margin: 6px 0 12px 0;
+        border: 1px solid #2d3446;
+        border-radius: 8px;
+        background: var(--bg-input);
+        color: white;
+        box-sizing: border-box;
+    }
+    #loginBox input[type="email"], #loginBox input[type="password"] {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border-radius: 8px;
+        border: 1px solid #2a2e3d;
+        background: #0f111a;
+        color: white;
+    }
+    #loginBox input:focus {
+        outline: none;
+        border-color: #00e676;
+    }
+    #loginBox button {
+        width: 100%;
+        padding: 12px;
+        font-weight: bold;
+        margin-top: 10px;
+    }
+    .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .btn {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .btn:hover { filter: brightness(1.2); }
+    .btn-success { background: var(--accent); color: #000; }
+    .btn-primary { background: var(--primary); }
+    .btn-warning { background: var(--warning); }
+    .btn-danger { background: var(--danger); }
+    
+    .item {
+        background: var(--bg-input);
+        padding: 12px;
+        margin: 8px 0;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary);
+    }
+    .item.vale { border-left-color: var(--danger); }
+    .saldo-destaque { font-size: 24px; font-weight: bold; margin-bottom: 15px; color: var(--accent); }
+    .hidden { display: none !important; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 10px; border-bottom: 1px solid #2d3446; text-align: center; }
+    th { color: var(--text-muted); font-size: 12px; }
 
-body {
-    background: #f0f2f5;
-    padding-bottom: 50px;
-}
+    #toast {
+        position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+        background: var(--accent); color: #000; padding: 12px 25px;
+        border-radius: 30px; font-weight: bold; opacity: 0; transition: .3s; z-index: 9999;
+    }
+    #toast.show { opacity: 1; }
 
-/* --- TELA DE LOGIN --- */
-#tela-login {
+    /* Estilo do Alerta Flutuante Realtime */
+    #realtime-alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #1e88e5;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+        display: none;
+        align-items: center;
+        gap: 12px;
+        z-index: 110000;
+        font-weight: bold;
+        border-left: 5px solid #00e676;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+
+    .custom-modal {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 100000;
+    }
+    .modal-content {
+        background: var(--bg-card);
+        padding: 25px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    @media print {
+        body { background: white; color: black; }
+        .tabs, input, select, button, .btn, .card:has(input), header, #loginBox { display: none !important; }
+        .card { background: white; color: black; box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; }
+        .item { background: #f5f5f5; color: black; border: 1px solid #ddd; }
+    }
+</style>
+</head>
+<body>
+
+<div id="realtime-alert">
+    <span>🔔</span>
+    <span id="realtime-alert-text">Novo lançamento registrado!</span>
+</div>
+
+<div id="loginBox" style="
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: #1e293b;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-}
-
-.caixa-login {
-    background: white;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    width: 100%;
-    max-width: 380px;
-}
-
-.caixa-login h2 {
-    text-align: center;
-    margin-bottom: 20px;
-    border: none;
-    padding: 0;
-}
-
-.checkbox-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 10px;
-    font-size: 14px;
-    color: #475569;
-    cursor: pointer;
-}
-.checkbox-container input {
-    width: auto;
-    cursor: pointer;
-}
-
-/* --- PAINEL PRINCIPAL --- */
-#sistema-conteudo {
-    display: none; /* Oculto até autenticar */
-}
-
-.topo {
-    background: #1e293b;
-    color: white;
-    padding: 15px;
-    text-align: center;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-}
-
-.topo h1 {
-    font-size: 24px;
-    margin-bottom: 12px;
-    font-weight: bold;
-    color: #f8fafc;
-}
-
-.menu-navegacao {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.menu-navegacao button {
-    background: #334155;
-    color: #f1f5f9;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 13px;
-    transition: all 0.2s;
-}
-
-.menu-navegacao button.active, .menu-navegacao button:hover {
-    background: #2563eb;
-    color: white;
-}
-
-.btn-sair {
-    background: #ef4444 !important;
-}
-
-.conteudo {
-    max-width: 900px;
-    margin: 20px auto;
-    padding: 0 15px;
-}
-
-.aba {
-    display: none;
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-}
-
-.aba.active {
-    display: block;
-}
-
-h2 {
-    margin-bottom: 20px;
-    color: #1e293b;
-    border-bottom: 2px solid #e2e8f0;
-    padding-bottom: 8px;
-    font-size: 18px;
-}
-
-/* --- ESTILOS EXCLUSIVOS DA FILA DE MECÂNICOS --- */
-h3.titulo-mecanico {
-    background: #f3f4f6;
-    padding: 12px 16px;
-    border-radius: 8px;
-    font-size: 16px;
-    color: #374151;
-    margin-top: 25px;
-    border-left: 4px solid #4b5563;
-}
-
-.grid-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px;
-    margin-bottom: 20px;
-    margin-top: 10px;
-}
-
-.card {
-    background: #ffffff;
-    padding: 18px;
-    border: 1px solid #e5e7eb;
-    border-left: 6px solid #9ca3af;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.card.agendado { border-left-color: #2563eb; }
-.card.pendente { border-left-color: #dc2626; }
-.card.andamento { border-left-color: #f59e0b; }
-.card.concluido { border-left-color: #16a34a; background: #f9fafb; }
-
-.cliente-nome {
-    font-size: 16px;
-    font-weight: 700;
-    color: #111827;
-    margin-bottom: 8px;
-}
-
-.info {
-    margin: 6px 0;
-    font-size: 14px;
-    color: #4b5563;
-}
-
-.alerta {
-    color: #dc2626;
-    font-weight: 600;
-    font-size: 13px;
-    margin-top: 6px;
-}
-
-.ok {
-    color: #16a34a;
-    font-weight: bold;
-    text-align: center;
-    padding: 8px;
-    background: #f0fdf4;
-    border-radius: 6px;
-    margin-bottom: 6px;
-    font-size: 14px;
-}
-
-.status-label {
-    font-weight: 700;
-    font-size: 14px;
-    margin: 10px 0;
-}
-
-.data-registro {
-    font-size: 11px;
-    color: #9ca3af;
-    display: block;
-    margin-bottom: 12px;
-}
-
-.btn-iniciar { background: #2563eb; color: white; width: 100%; padding: 10px; margin-top: 6px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
-.btn-concluir { background: #16a34a; color: white; width: 100%; padding: 10px; margin-top: 6px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
-
-.card-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-top: auto;
-}
-.card-actions button {
-    width: 100%;
-    padding: 10px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 14px;
+    background: #0f111a;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-}
-.btn-imprimir { background: #f59e0b; color: white; }
-.btn-ver-nota { background: #7c3aed; color: white; }
-.btn-pdf { background: #dc2626; color: white; }
-.btn-whatsapp { background: #16a34a; color: white; }
-.btn-motor { background: #ff5722; color: white; }
+    z-index: 99999;
+">
+    <form onsubmit="entrarSistema(event)" style="
+        background: #161925;
+        padding: 40px;
+        border-radius: 15px;
+        width: 360px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    ">
+        <h2 style="text-align: center; color: white; margin-top: 0; margin-bottom: 20px;">
+            🔐 Oficina Bravo
+        </h2>
+        <input id="emailLogin" type="email" placeholder="E-mail" required>
+        <input id="senhaLogin" type="password" placeholder="Palavra-passe" required>
+        
+        <div style="display: flex; align-items: center; gap: 8px; margin: 10px 0; font-size: 14px; color: var(--text-muted);">
+            <input type="checkbox" id="lembrar" style="width: auto; margin: 0; cursor: pointer;">
+            <label for="lembrar" style="margin: 0; cursor: pointer; user-select: none;">Lembrar meus dados</label>
+        </div>
 
-/* --- FORMULÁRIOS E CAMPOS --- */
-.grupo-campo {
-    margin-bottom: 15px;
-}
+        <button type="submit" class="btn btn-success">
+            ENTRAR
+        </button>
+        <p id="erroLogin" style="color: #ff1744; text-align: center; margin-top: 15px; margin-bottom: 0; font-size: 14px; font-weight: 500;"></p>
+    </form>
+</div>
 
-.grupo-campo label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-    color: #475569;
-    font-size: 14px;
-}
-
-input, select, textarea {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    font-size: 14px;
-    outline: none;
-}
-
-input:focus, select:focus, textarea:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
-}
-
-.linha-dupla {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-}
-
-.btn-acao {
-    background: #2563eb;
-    color: white;
-    border: none;
-    padding: 12px;
-    width: 100%;
-    border-radius: 6px;
-    font-weight: bold;
-    font-size: 15px;
-    cursor: pointer;
-    margin-top: 10px;
-}
-
-.btn-acao:hover {
-    background: #1d4ed8;
-}
-
-/* --- SELEÇÃO DE SERVIÇOS --- */
-.caixa-servicos {
-    border: 1px solid #e2e8f0;
-    padding: 15px;
-    border-radius: 6px;
-    background: #f8fafc;
-    margin-bottom: 15px;
-}
-
-.busca-sugestao {
-    position: relative;
-}
-
-.lista-sugestoes {
+<header>📋 Controle Financeiro PRO</header>
+<button onclick="sairSistema()" style="
     position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    border: 1px solid #cbd5e1;
-    border-top: none;
-    border-radius: 0 0 6px 6px;
-    max-height: 150px;
-    overflow-y: auto;
-    z-index: 10;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-}
-
-.item-sugestao {
-    padding: 10px;
-    cursor: pointer;
-    font-size: 14px;
-}
-
-.item-sugestao:hover {
-    background: #f1f5f9;
-}
-
-.lista-selecionados {
-    margin-top: 15px;
-}
-
-.card-servico {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: white;
-    padding: 10px;
-    border-radius: 6px;
-    margin-bottom: 8px;
-    border: 1px solid #e2e8f0;
-    border-left: 4px solid #2563eb;
-}
-
-.card-servico span {
-    font-size: 14px;
-    font-weight: bold;
-}
-
-.btn-del {
-    background: #ef4444;
+    top: 15px;
+    right: 15px;
+    background: #ff1744;
     color: white;
     border: none;
-    padding: 4px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-}
-
-.resumo-valores {
-    display: flex;
-    justify-content: space-between;
-    font-weight: bold;
-    font-size: 16px;
-    background: #e2e8f0;
-    padding: 12px;
-    border-radius: 6px;
-    margin-top: 15px;
-}
-
-/* --- CARDS DE LISTAGEM --- */
-.card-os {
-    background: white;
-    border: 1px solid #e2e8f0;
-    padding: 15px;
+    padding: 8px 14px;
     border-radius: 8px;
-    margin-bottom: 15px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-}
-
-.card-os-topo {
-    display: flex;
-    justify-content: space-between;
     font-weight: bold;
-    color: #1e293b;
-    margin-bottom: 10px;
-    font-size: 15px;
-}
-
-.card-os-corpo {
-    font-size: 14px;
-    color: #475569;
-    line-height: 1.5;
-}
-
-.card-os-acoes {
-    margin-top: 12px;
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.card-os-acoes button {
-    padding: 6px 12px;
-    border: none;
-    border-radius: 4px;
     cursor: pointer;
-    font-weight: bold;
-    font-size: 12px;
-    color: white;
-}
-</style>
-</head>
-<body>
+    z-index: 10000;
+    font-size: 14px;
+">🚪 Sair</button>
 
-<div id="tela-login">
-    <div class="caixa-login">
-        <h2>Acesso ao Sistema</h2>
-        <div class="grupo-campo">
-            <label>E-mail</label>
-            <input type="email" id="login-email" placeholder="seuemail@provedor.com">
-        </div>
-        <div class="grupo-campo">
-            <label>Senha</label>
-            <input type="password" id="login-senha" placeholder="••••••••">
-        </div>
-        <label class="checkbox-container">
-            <input type="checkbox" id="login-salvar" checked> Deixar login guardado neste computador
-        </label>
-        <button class="btn-acao" onclick="executarLogin()">🔓 Entrar no Sistema</button>
-    </div>
+<div class="tabs">
+    <button id="tab-ind" class="active" onclick="show('individual')">👤 Mecânicos / Individual</button>
+    <button id="tab-ger" onclick="show('geral')">🌐 Relatório Geral & Ranking</button>
 </div>
 
-<div id="sistema-conteudo">
-    <div class="topo">
-        <h1>Oficina Bravo</h1>
-        <div class="menu-navegacao">
-            <button class="active" onclick="mudarAba('nova')">➕ Nova OS</button>
-            <button onclick="mudarAba('fila-aba')">👨‍🔧 Fila de Atendimento</button>
-            <button onclick="mudarAba('buscar')">🔍 Pesquisar/Listar</button>
-            <button onclick="mudarAba('config')">⚙️ Configurações</button>
-            <button class="btn-sair" onclick="executarLogout()">❌ Sair</button>
+<div class="container">
+
+    <div class="card">
+        <h3>📅 Filtro de Período Geral</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+                <label>De:</label>
+                <input type="date" id="filtroInicio" onchange="globalRefresh()">
+            </div>
+            <div>
+                <label>Até:</label>
+                <input type="date" id="filtroFim" onchange="globalRefresh()">
+            </div>
         </div>
     </div>
 
-    <div class="conteudo">
-        <div id="aba-nova" class="aba active">
-            <h2>Criar Nova Ordem de Serviço</h2>
+    <div id="individualBox">
+        <div class="card">
+            <h3>⚙️ Configuração Geral</h3>
+            <label>Taxa de Retenção da Empresa (%)</label>
+            <input id="taxa" type="number" placeholder="Ex: 20">
+            <button class="btn btn-success" onclick="salvarTaxa()">💾 Salvar Taxa</button>
+        </div>
+
+        <div class="card">
+            <h3>👤 Cadastrar Novo Mecânico</h3>
+            <input id="nome" placeholder="Nome do Mecânico">
+            <input id="telefone" placeholder="Telefone (Ex: 5591982976479)">
+            <button class="btn btn-success" onclick="addUser()">➕ Adicionar Mecânico</button>
+        </div>
+
+        <div class="card">
+            <h3>💸 Novo Lançamento</h3>
+            <label>Selecionar Mecânico</label>
+            <select id="userSelect" onchange="autoRender()"></select>
             
-            <div class="grupo-campo">
-                <label>Nome do Cliente</label>
-                <input type="text" id="os_cliente" placeholder="Ex: João Silva">
-            </div>
-
-            <div class="linha-dupla">
-                <div class="grupo-campo">
-                    <label>Telefone do Cliente</label>
-                    <input type="text" id="os_telefone" placeholder="Ex: 91999999999">
-                </div>
-                <div class="grupo-campo">
-                    <label>Mecânico Responsável</label>
-                    <select id="os_responsavel">
-                        <option value="Sem responsável">Selecione o Mecânico</option>
-                        <option value="Naldo">Naldo</option>
-                        <option value="Diel">Diel</option>
-                        <option value="Preto">Preto</option>
-                        <option value="Dudu">Dudu</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="linha-dupla">
-                <div class="grupo-campo">
-                    <label>Moto / Veículo</label>
-                    <input type="text" id="os_moto" placeholder="Ex: Titan 160">
-                </div>
-                <div class="grupo-campo">
-                    <label>Modelo / Ano</label>
-                    <input type="text" id="os_modelo" placeholder="Ex: 2022">
-                </div>
-            </div>
-
-            <div class="linha-dupla">
-                <div class="grupo-campo">
-                    <label>Quilometragem (KM)</label>
-                    <input type="number" id="os_km" placeholder="Ex: 15000">
-                </div>
-                <div class="grupo-campo">
-                    <label>Status Inicial</label>
-                    <select id="os_status">
-                        <option value="agendado">📅 Agendado</option>
-                        <option value="andamento">🔧 Em andamento</option>
-                        <option value="pendente">⏳ Pendente</option>
-                        <option value="concluido">✅ Concluído</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="linha-dupla">
-                <div class="grupo-campo">
-                    <label>Data Agendada</label>
-                    <input type="date" id="os_dataAgendada">
-                </div>
-                <div class="grupo-campo">
-                    <label>Hora Agendada</label>
-                    <input type="time" id="os_horaAgendada">
-                </div>
-            </div>
-
-            <div class="grupo-campo">
-                <label>Prazo de Garantia (Dias)</label>
-                <input type="number" id="os_garantia" value="30">
-            </div>
-
-            <div class="caixa-servicos">
-                <label style="font-weight: bold; color: #1e293b; display: block; margin-bottom: 10px;">Adicionar Serviços e Peças</label>
-                <div class="busca-sugestao">
-                    <input type="text" id="campoBuscaOS" placeholder="Digite para buscar serviço ou peça..." oninput="filtrarSugestoesOS()">
-                    <div id="sugestoesOS" class="lista-sugestoes" style="display: none;"></div>
-                </div>
-                <div id="listaSelecionadosOS" class="lista-selecionados"></div>
-                <div class="resumo-valores">
-                    <span>TOTAL:</span>
-                    <span id="txt_total_os">R$ 0.00</span>
-                </div>
-            </div>
-
-            <button class="btn-acao" onclick="salvarNovaOS()">💾 Salvar Ordem de Serviço</button>
+            <label>Valor (R$)</label>
+            <input id="valor" type="number" placeholder="0.00">
+            
+            <label>Descrição do Serviço</label>
+            <input id="desc" placeholder="Ex: Alinhamento, Troca de Óleo...">
+            
+            <label>Tipo</label>
+            <select id="tipo">
+                <option value="acrescimo">➕ Ganho (Serviço executado)</option>
+                <option value="vale">🧾 Gasto (Vale / Retirada)</option>
+            </select>
+            <button class="btn btn-success" onclick="addPayment()">💾 Gravar Lançamento</button>
         </div>
 
-        <div id="aba-fila-aba" class="aba">
-            <h2>Fila de Trabalho dos Mecânicos</h2>
-            <div id="fila">Carregando dados online...</div>
+        <div class="card">
+            <h3>📊 Desempenho no Período</h3>
+            <canvas id="chart" style="max-height: 220px;"></canvas>
         </div>
 
-        <div id="aba-buscar" class="aba">
-            <h2>Pesquisar e Listar Ordens de Serviço</h2>
-            <div class="grupo-campo">
-                <input type="text" id="buscaGeral" placeholder="Buscar por cliente, moto ou mecânico..." oninput="listarOS()">
-            </div>
-            <div id="listaOSGeral"></div>
+        <div class="card" id="resumo"></div>
+        
+        <div class="card">
+            <h3>📜 Histórico de Lançamentos</h3>
+            <div id="listaLancamentos"></div>
+        </div>
+    </div>
+
+    <div id="geralBox" class="hidden">
+        <div class="card">
+            <h3>🏢 Gastos Operacionais da Empresa</h3>
+            <input id="gastoValor" type="number" placeholder="Valor R$">
+            <input id="gastoDesc" placeholder="Descrição do Gasto">
+            <button class="btn btn-success" onclick="addGastoEmpresa()">➕ Registrar Gasto</button>
+            <div id="listaGastosEmpresa" style="margin-top: 15px;"></div>
         </div>
 
-        <div id="aba-config" class="aba">
-            <h2>Configurações do Sistema</h2>
-            <div class="caixa-servicos">
-                <h4 style="margin-bottom: 10px;">Cadastrar Serviço Base</h4>
-                <div class="grupo-campo"><input type="text" id="base_serv_nome" placeholder="Nome do Serviço"></div>
-                <div class="grupo-campo"><input type="number" id="base_serv_preco" placeholder="Preço (R$)"></div>
-                <button class="btn-acao" style="background:#8e44ad;" onclick="salvarServicoBase()">Salvar Serviço</button>
-                <div id="listaConfigServicos" style="margin-top:15px;"></div>
-            </div>
+        <div class="card" id="resumoGeral"></div>
+        
+        <div class="card">
+            <h3>🏆 Ranking de Mecânicos no Período</h3>
+            <div id="rankingMecanicos"></div>
+        </div>
+    </div>
 
-            <div class="caixa-servicos" style="margin-top:20px;">
-                <h4 style="margin-bottom: 10px;">Cadastrar Peça Base</h4>
-                <div class="grupo-campo"><input type="text" id="base_peca_nome" placeholder="Nome da Peça"></div>
-                <div class="grupo-campo"><input type="number" id="base_peca_preco" placeholder="Preço (R$)"></div>
-                <button class="btn-acao" style="background:#9b59b6;" onclick="salvarPecaBase()">Salvar Peça</button>
-                <div id="listaConfigPecas" style="margin-top:15px;"></div>
-            </div>
+</div>
+
+<div id="modalConfirmacao" class="custom-modal">
+    <div class="modal-content">
+        <h3 id="modalConfirmTitulo">Confirmar ação</h3>
+        <p id="modalConfirmTexto" style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;"></p>
+        <div class="btn-group">
+            <button class="btn btn-danger" id="modalConfirmBtnSim">Confirmar</button>
+            <button class="btn" style="background:#555" onclick="fecharModal('modalConfirmacao')">Cancelar</button>
         </div>
     </div>
 </div>
+
+<div id="modalEdicao" class="custom-modal">
+    <div class="modal-content">
+        <h3>✏️ Editar Lançamento</h3>
+        <label>Valor (R$)</label>
+        <input type="number" id="editModalValor">
+        <label>Descrição</label>
+        <input type="text" id="editModalDesc">
+        <div class="btn-group">
+            <button class="btn btn-success" id="modalEditBtnSalvar">Salvar</button>
+            <button class="btn" style="background:#555" onclick="fecharModal('modalEdicao')">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
 
 <script>
-// ================= CONFIGURAÇÃO SUPABASE =================
-const SUPABASE_URL = "https://ldtnfzcwzdhoqnozhlbe.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_X3yMJOKVYRMnSagCjoFxvw_bksRNAjE";
+const SUPABASE_URL = 'https://spampthijhzrobleoqrk.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_WTdbepY0NYEQ6gERzWAlKQ_OEbOhqVK';
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+        persistSession: true,
+        autoRefreshToken: true
+    }
+});
 
-let dados = [];
-let cacheServicosBase = [];
-let cachePecasBase = [];
-let servicosSelecionadosNaOS = [];
+let listaMecanicos = [];
+let listaLancamentos = [];
+let listaGastosEmpresa = [];
+let taxa = 20;
+let chart;
+let currentTab = "individual";
+let usuarioAtual = null;
 
-window.onload = async function() {
-    document.getElementById("os_dataAgendada").value = new Date().toISOString().split('T')[0];
-    document.getElementById("os_horaAgendada").value = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-    
-    // Checagem automática de login guardado
-    await checarSessaoExistente();
-};
+const hoje = new Date();
+document.getElementById('filtroInicio').value = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
+document.getElementById('filtroFim').value = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0];
 
-// --- CONTROLO DE SESSÃO E AUTHENTICATION ---
-async function checarSessaoExistente() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) {
-        liberarSistema();
+function abrirModal(id) {
+    document.getElementById(id).style.display = 'flex';
+}
+function fecharModal(id) {
+    document.getElementById(id).style.display = 'none';
+}
+
+function customConfirm(titulo, mensagem) {
+    return new Promise((resolve) => {
+        document.getElementById('modalConfirmTitulo').innerText = titulo;
+        document.getElementById('modalConfirmTexto').innerText = mensagem;
+        abrirModal('modalConfirmacao');
+        
+        document.getElementById('modalConfirmBtnSim').onclick = function() {
+            fecharModal('modalConfirmacao');
+            resolve(true);
+        };
+    });
+}
+
+// 🔊 Som de notificação
+function tocarSomNotificacao() {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.15);
+    } catch(e) {
+        console.log("AudioContext bloqueado ou sem suporte");
     }
 }
 
-async function executarLogin() {
-    const email = document.getElementById("login-email").value;
-    const senha = document.getElementById("login-senha").value;
-    const deixarSalvo = document.getElementById("login-salvar").checked;
+// 📱 Alerta Realtime
+function mostrarAlertaRealtime(texto) {
+    tocarSomNotificacao();
+    const alertBox = document.getElementById("realtime-alert");
+    document.getElementById("realtime-alert-text").innerText = texto;
+    alertBox.style.display = "flex";
+    setTimeout(() => {
+        alertBox.style.display = "none";
+    }, 4500);
+}
 
-    if(!email || !senha) return alert("Indique e-mail e senha!");
-    
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
+// ⚡ Ativar Realtime Supabase
+function inicializarRealtime() {
+    db.channel('mudancas_oficina')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'lancamentos' }, async (payload) => {
+        await fetchDataFromSupabase();
+        
+        if (payload.eventType === 'INSERT') {
+            mostrarAlertaRealtime(`Novo lançamento: R$ ${payload.new.valor.toFixed(2)} (${payload.new.desc})`);
+        } else if (payload.eventType === 'DELETE') {
+            mostrarAlertaRealtime(`Um lançamento foi removido!`);
+        } else if (payload.eventType === 'UPDATE') {
+            mostrarAlertaRealtime(`Lançamento editado: R$ ${payload.new.valor.toFixed(2)}`);
+        }
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'mecanicos' }, async (payload) => {
+        await fetchDataFromSupabase();
+        if (payload.eventType === 'INSERT') {
+            mostrarAlertaRealtime(`👤 Novo mecânico cadastrado: ${payload.new.nome}`);
+        }
+    })
+    .subscribe();
+}
+
+async function verificarSessaoAtiva() {
+    try {
+        const savedEmail = localStorage.getItem("oficina_email");
+        const savedPass = localStorage.getItem("oficina_senha");
+        
+        if (savedEmail && savedPass) {
+            document.getElementById("emailLogin").value = savedEmail;
+            document.getElementById("senhaLogin").value = savedPass;
+            document.getElementById("lembrar").checked = true;
+        }
+
+        const { data: { session }, error } = await db.auth.getSession();
+        
+        if (session) {
+            usuarioAtual = session.user;
+            document.getElementById("loginBox").style.display = "none";
+            document.querySelector(".container").style.display = "block";
+            await fetchDataFromSupabase();
+            inicializarRealtime();
+        } else {
+            document.getElementById("loginBox").style.display = "flex";
+            document.querySelector(".container").style.display = "none";
+        }
+    } catch (err) {
+        console.error("Erro na verificação de sessão ativa:", err);
+    }
+}
+
+async function entrarSistema(event) {
+    if (event) event.preventDefault();
+
+    let email = document.getElementById("emailLogin").value.trim();
+    let senha = document.getElementById("senhaLogin").value;
+    let lembrarCheckbox = document.getElementById("lembrar").checked;
+    let erroBox = document.getElementById("erroLogin");
+
+    erroBox.innerHTML = "A carregar...";
+
+    const { data, error } = await db.auth.signInWithPassword({
         email: email,
         password: senha
     });
 
     if (error) {
-        alert("Acesso negado: " + error.message);
-    } else {
-        liberarSistema();
-    }
-}
-
-async function executarLogout() {
-    await supabaseClient.auth.signOut();
-    window.location.reload();
-}
-
-async function liberarSistema() {
-    document.getElementById("tela-login").style.display = "none";
-    document.getElementById("sistema-conteudo").style.display = "block";
-    
-    // Inicia a carga dos dados
-    await carregarDadosOnline();
-    await carregarServicosBase();
-    await carregarPecasBase();
-}
-
-async function carregarDadosOnline() {
-    try {
-        const { data, error } = await supabaseClient
-            .from('os_oficina')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        dados = data || [];
-        
-        mostrarFila();
-        listarOS();
-    } catch (err) {
-        console.error("Erro ao carregar:", err);
-    }
-}
-
-// --- NAVEGAÇÃO DE ABAS ---
-function mudarAba(nomeAba) {
-    document.querySelectorAll('.aba').forEach(a => a.classList.remove('active'));
-    document.querySelectorAll('.menu-navegacao button').forEach(b => b.classList.remove('active'));
-    
-    document.getElementById('aba-' + nomeAba).classList.add('active');
-    event.target.classList.add('active');
-    
-    if(nomeAba === 'fila-aba' || nomeAba === 'buscar') {
-        carregarDadosOnline();
-    }
-}
-
-// --- SUGESTÕES DE AUTOCOMPLETAR ---
-async function carregarServicosBase() {
-    const { data } = await supabaseClient.from('servicos_base').select('*').order('nome', { ascending: true });
-    cacheServicosBase = data || [];
-    listarConfigServicos();
-}
-
-async function carregarPecasBase() {
-    const { data } = await supabaseClient.from('pecas_base').select('*').order('nome', { ascending: true });
-    cachePecasBase = data || [];
-    listarConfigPecas();
-}
-
-function filtrarSugestoesOS() {
-    const busca = document.getElementById("campoBuscaOS").value.toLowerCase();
-    const divSug = document.getElementById("sugestoesOS");
-    divSug.innerHTML = "";
-    
-    if(!busca) { divSug.style.display = "none"; return; }
-    let achou = false;
-    
-    cacheServicosBase.forEach(s => {
-        if(s.nome.toLowerCase().includes(busca)) {
-            achou = true;
-            divSug.innerHTML += `<div class="item-sugestao" onclick="adicionarItemNaOS('${s.nome}', ${s.preco}, 'Serviço')">🛠️ (SERV) ${s.nome} - R$ ${parseFloat(s.preco).toFixed(2)}</div>`;
-        }
-    });
-
-    cachePecasBase.forEach(p => {
-        if(p.nome.toLowerCase().includes(busca)) {
-            achou = true;
-            divSug.innerHTML += `<div class="item-sugestao" onclick="adicionarItemNaOS('${p.nome}', ${p.preco}, 'Peça')">📦 (PEÇA) ${p.nome} - R$ ${parseFloat(p.preco).toFixed(2)}</div>`;
-        }
-    });
-    divSug.style.display = achou ? "block" : "none";
-}
-
-function adicionarItemNaOS(nome, preco, tipo) {
-    servicosSelecionadosNaOS.push({ nome, preco: parseFloat(preco), tipo });
-    document.getElementById("campoBuscaOS").value = "";
-    document.getElementById("sugestoesOS").style.display = "none";
-    atualizarListaSelecionadosOS();
-}
-
-function removerItemDaOS(index) {
-    servicosSelecionadosNaOS.splice(index, 1);
-    atualizarListaSelecionadosOS();
-}
-
-function atualizarListaSelecionadosOS() {
-    const div = document.getElementById("listaSelecionadosOS");
-    div.innerHTML = "";
-    let total = 0;
-    
-    servicosSelecionadosNaOS.forEach((item, index) => {
-        total += item.preco;
-        div.innerHTML += `
-            <div class="card-servico" style="border-left-color: ${item.tipo === 'Peça' ? '#9b59b6' : '#2563eb'}">
-                <span>${item.tipo === 'Peça' ? '📦' : '🛠️'} ${item.nome} - R$ ${item.preco.toFixed(2)}</span>
-                <button class="btn-del" onclick="removerItemDaOS(${index})">Remover</button>
-            </div>
-        `;
-    });
-    document.getElementById("txt_total_os").innerText = `R$ ${total.toFixed(2)}`;
-}
-
-// --- INSERIR NO BANCO ---
-async function salvarNovaOS() {
-    const cliente = document.getElementById("os_cliente").value;
-    const telefone = document.getElementById("os_telefone").value;
-    const responsavel = document.getElementById("os_responsavel").value;
-    const moto = document.getElementById("os_moto").value;
-    const modelo = document.getElementById("os_modelo").value;
-    const km = document.getElementById("os_km").value;
-    const status = document.getElementById("os_status").value;
-    const dataAgendada = document.getElementById("os_dataAgendada").value;
-    const horaAgendada = document.getElementById("os_horaAgendada").value;
-    const garantia = parseInt(document.getElementById("os_garantia").value || 0);
-    
-    let total = 0;
-    servicosSelecionadosNaOS.forEach(s => total += s.preco);
-
-    if(!cliente) return alert("O nome do cliente é obrigatório!");
-
-    const novaOS = {
-        cliente, telefone, responsavel, moto, modelo, km, status,
-        dataAgendada, horaAgendada, garantia, valor: total,
-        servicos: servicosSelecionadosNaOS
-    };
-
-    const { error } = await supabaseClient.from('os_oficina').insert([novaOS]);
-
-    if(error) {
-        alert("Erro: " + error.message);
-    } else {
-        alert("Ordem de Serviço salva!");
-        document.getElementById("os_cliente").value = "";
-        document.getElementById("os_telefone").value = "";
-        document.getElementById("os_moto").value = "";
-        document.getElementById("os_modelo").value = "";
-        document.getElementById("os_km").value = "";
-        servicosSelecionadosNaOS = [];
-        atualizarListaSelecionadosOS();
-        carregarDadosOnline();
-    }
-}
-
-// --- APRESENTAR A FILA ---
-function mostrarFila() {
-    let div = document.getElementById("fila");
-    div.innerHTML = "";
-
-    if (dados.length === 0) {
-        div.innerHTML = "<p style='text-align:center; color:#666;'>Nenhuma OS registada no banco.</p>";
+        console.error("Erro no login:", error);
+        erroBox.innerHTML = "❌ Erro: " + error.message;
         return;
     }
 
-    let mecanicos = {};
-    let ordenadosFila = [...dados].reverse();
+    if (lembrarCheckbox) {
+        localStorage.setItem("oficina_email", email);
+        localStorage.setItem("oficina_senha", senha);
+    } else {
+        localStorage.removeItem("oficina_email");
+        localStorage.removeItem("oficina_senha");
+    }
 
-    ordenadosFila.forEach((item, index) => {
-        let resp = item.responsavel || "Sem responsável";
-        if(!mecanicos[resp]) mecanicos[resp] = [];
+    usuarioAtual = data.user;
+    document.getElementById("loginBox").style.display = "none";
+    document.querySelector(".container").style.display = "block";
+    toast("✅ Login realizado com sucesso!");
+    await fetchDataFromSupabase();
+    inicializarRealtime();
+}
 
-        let anterior = ordenadosFila.slice(0, index).reverse().find(d => d.cliente === item.cliente);
-        let rodado = 0;
-        if(anterior && item.km && anterior.km){
-            rodado = Number(item.km) - Number(anterior.km);
+async function sairSistema() {
+    await db.auth.signOut();
+    usuarioAtual = null;
+    
+    if (!document.getElementById("lembrar").checked) {
+        document.getElementById("emailLogin").value = "";
+        document.getElementById("senhaLogin").value = "";
+    }
+    
+    document.getElementById("erroLogin").innerHTML = "";
+    document.getElementById("loginBox").style.display = "flex";
+    document.querySelector(".container").style.display = "none";
+}
+
+function toast(msg){
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(()=>t.classList.remove("show"),2000);
+}
+
+function show(type){
+    currentTab = type;
+    document.getElementById("individualBox").classList.toggle("hidden", type!=="individual");
+    document.getElementById("geralBox").classList.toggle("hidden", type!=="geral");
+    
+    document.getElementById("tab-ind").classList.toggle("active", type==="individual");
+    document.getElementById("tab-ger").classList.toggle("active", type==="geral");
+
+    globalRefresh();
+}
+
+async function fetchDataFromSupabase() {
+    try {
+        let { data: mec, error: errMec } = await db.from('mecanicos').select('*');
+        if (!errMec) listaMecanicos = mec || [];
+
+        let { data: lan, error: errLan } = await db.from('lancamentos').select('*');
+        if (!errLan) listaLancamentos = lan || [];
+
+        let { data: gas, error: errGas } = await db.from('gastos_empresa').select('*');
+        if (!errGas) listaGastosEmpresa = gas || [];
+
+        let { data: config, error: errConf } = await db.from('configuracoes').select('*').eq('chave', 'taxa_retencao').single();
+        if (!errConf && config) {
+            taxa = Number(config.valor);
+            document.getElementById('taxa').value = taxa;
         }
 
-        let alerta = rodado >= 1000 ? "⚠️ Próximo da troca de óleo" : "";
-        mecanicos[resp].push({ ...item, index, rodado, alerta });
-    });
-
-    let htmlFinal = "";
-
-    for(let nome in mecanicos){
-        htmlFinal += `
-        <h3 class="titulo-mecanico">👨‍🔧 ${nome} (${mecanicos[nome].length} serviços)</h3>
-        <div class="grid-cards">
-        `;
-
-        mecanicos[nome].forEach(item => {
-            let cor = item.status || "agendado";
-            let dataMostrar = item.dataAgendada || (item.created_at ? new Date(item.created_at).toLocaleDateString('pt-BR') : "Sem data");
-
-            htmlFinal += `
-            <div class="card ${cor}">
-                <div>
-                    <div class="cliente-nome">${item.cliente || "Cliente Oculto"}</div>
-                    <div class="info">🏍️ ${item.moto || "-"} ${item.modelo ? " - " + item.modelo : ""}</div>
-                    <div class="info">📊 KM: ${item.km || "Não informado"}</div>
-                    <div class="info">📅 ${dataMostrar} às ${item.horaAgendada || "--:--"}</div>
-                    <div class="info">🔄 Rodado: ${item.rodado || 0} km</div>
-                    ${item.alerta ? `<div class="alerta">${item.alerta}</div>` : ""}
-                    <div class="status-label">${textoStatus(item.status)}</div>
-                </div>
-                <div>
-                    ${item.status === "agendado" ? `<button class="btn-iniciar" onclick="alterarStatusOSDirect(${item.id}, 'andamento')">▶ Iniciar Serviço</button>` : ""}
-                    ${item.status !== "concluido" ? `<button class="btn-concluir" onclick="alterarStatusOSDirect(${item.id}, 'concluido')">✔ Concluir Serviço</button>` : `<div class="ok">✔ Serviço Finalizado</div>`}
-
-                    <div class="card-actions">
-                        <button class="btn-imprimir" onclick="imprimirDirect(${item.id})">🧾 Nota</button>
-                        <button class="btn-motor" onclick="gerarGarantiaMotorDirect(${item.id})">⚙️ Motor</button>
-                        <button class="btn-whatsapp" style="grid-column: 1 / -1;" onclick="enviarWhatsappDirect(${item.id})">💬 WhatsApp</button>
-                    </div>
-                </div>
-            </div>
-            `;
-        });
-        htmlFinal += `</div>`;
+        updateUserSelectUI();
+        globalRefresh();
+    } catch (e) {
+        console.error("Erro ao buscar dados do Supabase:", e);
     }
-    div.innerHTML = htmlFinal;
 }
 
-function textoStatus(status){
-    if(status === "agendado") return "📅 Agendado";
-    if(status === "andamento") return "🔧 Em andamento";
-    if(status === "concluido") return "✅ Concluído";
-    return "⏳ Pendente";
+function globalRefresh() {
+    if(currentTab === "geral") {
+        renderGeral();
+    } else {
+        let u = document.getElementById("userSelect").value;
+        if(u) renderUser(u);
+    }
 }
 
-async function alterarStatusOSDirect(id, novoStatus) {
-    const { error } = await supabaseClient.from('os_oficina').update({ status: novoStatus }).eq('id', id);
-    if(error) alert("Erro: " + error.message);
-    else await carregarDadosOnline();
-}
-
-// --- LISTAGEM E ABA DE PESQUISA ---
-function listarOS() {
-    const busca = document.getElementById("buscaGeral").value.toLowerCase();
-    const div = document.getElementById("listaOSGeral");
-    div.innerHTML = "";
-
-    let filtrados = dados.filter(item => 
-        (item.cliente || "").toLowerCase().includes(busca) ||
-        (item.moto || "").toLowerCase().includes(busca) ||
-        (item.responsavel || "").toLowerCase().includes(busca)
+async function salvarTaxa(){
+    const inputTaxa = Number(document.getElementById("taxa").value);
+    
+    const { error } = await db.from('configuracoes').upsert(
+        { chave: 'taxa_retencao', valor: inputTaxa.toString() },
+        { onConflict: 'chave' }
     );
 
-    if(filtrados.length === 0) {
-        div.innerHTML = "<p style='color:#666;'>Nenhum registo encontrado.</p>";
-        return;
-    }
+    if (error) return alert("Erro ao salvar taxa: " + error.message);
+    
+    taxa = inputTaxa;
+    toast('✅ Taxa updated!');
+    globalRefresh();
+}
 
-    filtrados.forEach(item => {
-        div.innerHTML += `
-            <div class="card-os">
-                <div class="card-os-topo">
-                    <span>👤 ${item.cliente}</span>
-                    <span>R$ ${parseFloat(item.valor || 0).toFixed(2)}</span>
-                </div>
-                <div class="card-os-corpo">
-                    <b>🏍️ Veículo:</b> ${item.moto} - ${item.modelo || ''} | <b>📊 KM:</b> ${item.km || '-'}<br>
-                    <b>👨‍🔧 Mecânico:</b> ${item.responsavel} | <b>Status:</b> ${textoStatus(item.status)}
-                </div>
-                <div class="card-os-acoes">
-                    <button style="background:#f59e0b;" onclick="imprimirDirect(${item.id})">🧾 Imprimir</button>
-                    <button style="background:#16a34a;" onclick="enviarWhatsappDirect(${item.id})">💬 WhatsApp</button>
-                    <button style="background:#ef4444;" onclick="excluirOS(${item.id})">Deletar</button>
-                </div>
-            </div>
-        `;
+async function addUser(){
+    let nome = document.getElementById("nome").value.trim();
+    let telefone = document.getElementById("telefone").value.trim().replace(/\D/g, "");
+
+    if(!nome) return alert("Digite o nome do mecânico");
+
+    const { error } = await db.from('mecanicos').insert([{
+        nome: nome,
+        telefone: telefone || null,
+        data_cadastro: new Date().toISOString()
+     }]);
+
+    if (error) return alert("Erro ao salvar mecânico: " + error.message);
+
+    document.getElementById("nome").value = "";
+    document.getElementById("telefone").value = "";
+    toast('✅ Mecânico adicionado!');
+    await fetchDataFromSupabase();
+}
+
+async function addPayment(){
+    let user = document.getElementById("userSelect").value;
+    let valor = Number(document.getElementById("valor").value);
+    let tipo = document.getElementById("tipo").value;
+    let desc = document.getElementById("desc").value || "Sem descrição";
+
+    if(!user || !valor) return alert("Selecione o mecânico e informe o valor");
+
+    const { error } = await db.from('lancamentos').insert([{
+        mecanico: user,
+        valor: valor,
+        tipo: tipo,
+        desc: desc,
+        data: new Date().toISOString()
+    }]);
+
+    if (error) return alert("Erro ao gravar lançamento: " + error.message);
+
+    document.getElementById("valor").value = "";
+    document.getElementById("desc").value = "";
+    toast('✅ Lançamento gravado!');
+    await fetchDataFromSupabase();
+}
+
+function calc(nome){
+    let ganhos=0, gastos=0;
+    let ini = new Date(document.getElementById('filtroInicio').value + 'T00:00:00');
+    let fim = new Date(document.getElementById('filtroFim').value + 'T23:59:59');
+
+    let filtrados = listaLancamentos.filter(x => {
+        let d = new Date(x.data);
+        return x.mecanico === nome && d >= ini && d <= fim;
     });
+
+    filtrados.forEach(x=>{
+        if(x.tipo==="vale") gastos+=x.valor;
+        else ganhos+=x.valor;
+    });
+
+    let taxaValor = ganhos*(taxa/100);
+    const totalServicos = filtrados.filter(x => x.tipo === "acrescimo").length;
+    return {ganhos, gastos, taxaValor, saldo: ganhos - gastos - taxaValor, totalServicos, filtrados};
 }
 
-async function excluirOS(id) {
-    if(confirm("Deseja mesmo apagar permanentemente esta Ordem de Serviço?")) {
-        const { error } = await supabaseClient.from('os_oficina').delete().eq('id', id);
-        if (error) alert("Erro: " + error.message);
-        else await carregarDadosOnline();
+async function pagarUser(nome){
+    let confirmacao = await customConfirm("Fechar Conta", `Deseja zerar o histórico completo de lançamentos de ${nome} no banco de dados?`);
+    if(confirmacao){
+        const { error } = await db.from('lancamentos').delete().eq('mecanico', nome);
+        if (error) return alert("Erro ao limpar dados: " + error.message);
+        
+        toast('✔ Conta fechada!');
+        await fetchDataFromSupabase();
     }
 }
 
-// --- FUNÇÃO AUXILIAR DE DATA DE GARANTIA ---
-function calcularDatasGarantia(item) {
-    // Tenta usar a data agendada ou a data de criação, caso contrário usa a data de hoje
-    let dataOrigem = item.dataAgendada || (item.created_at ? item.created_at.split('T')[0] : null);
-    let dataInicioObj = dataOrigem ? new Date(dataOrigem + "T12:00:00") : new Date();
-    
-    let garantiaDias = parseInt(item.garantia || 30);
-    
-    let dataFimObj = new Date(dataInicioObj.getTime());
-    dataFimObj.setDate(dataFimObj.getDate() + garantiaDias);
+async function deleteItem(user, id){
+    let confirmacao = await customConfirm("Excluir Item", "Tem certeza que deseja excluir este lançamento permanentemente?");
+    if(confirmacao) {
+        const { error } = await db.from('lancamentos').delete().eq('id', id);
+        if (error) return alert("Erro ao remover: " + error.message);
+        
+        toast('🗑️ Item removido!');
+        await fetchDataFromSupabase();
+    }
+}
 
-    return {
-        inicio: dataInicioObj.toLocaleDateString('pt-BR'),
-        fim: dataFimObj.toLocaleDateString('pt-BR')
+function editItem(user, id){
+    let item = listaLancamentos.find(x => x.id === id);
+    if(!item) return;
+
+    document.getElementById("editModalValor").value = item.valor;
+    document.getElementById("editModalDesc").value = item.desc;
+    abrirModal('modalEdicao');
+
+    document.getElementById("modalEditBtnSalvar").onclick = async function() {
+        let novoValor = Number(document.getElementById("editModalValor").value);
+        let novaDesc = document.getElementById("editModalDesc").value;
+
+        if(!novoValor || !novaDesc) return alert("Preencha todos os campos!");
+
+        let dadosAtualizados = {
+            valor: novoValor,
+            desc: novaDesc
+        };
+
+        const { error } = await db.from('lancamentos').update(dadosAtualizados).eq('id', id);
+        if (error) {
+            alert("Erro ao atualizar: " + error.message);
+            return;
+        }
+
+        fecharModal('modalEdicao');
+        toast('✏️ Item atualizado!');
+        await fetchDataFromSupabase();
     };
 }
 
-// --- ACÇÕES E IMPRESSÃO ---
-function encontrarItemPorId(id) {
-    return dados.find(d => d.id === id);
-}
-
-function enviarWhatsappDirect(id) {
-    let item = encontrarItemPorId(id);
-    if(!item) return;
-
-    let listaServicos = "Nenhum";
-    if (item.servicos && Array.isArray(item.servicos)) {
-        listaServicos = item.servicos.map(s => `* ${s.nome}: R$ ${Number(s.preco).toFixed(2)}`).join("\n");
-    }
-
-    const datas = calcularDatasGarantia(item);
-
-    let texto = `*OFICINA BRAVO* cnpj:57.480.896/0001-70\nEndereço: Passagem Canaãn°, 8 - Terra Firme, Belém - PA, 66077-005🏍️\n`;
-    texto += `*Comprovante de Serviço*\n\n`;
-    texto += `👤 *Cliente:* ${item.cliente || "Não informado"}\n`;
-    texto += `🏍️ *Veículo:* ${item.moto || ""} ${item.modelo || ""}\n`;
-    texto += `📊 *KM:* ${item.km || "-"}\n`;
-    texto += `📅 *Data:* ${item.dataAgendada || "-"} às ${item.horaAgendada || "--:--"}\n\n`;
-    texto += `🛠️ *Serviços Realizados:*\n${listaServicos}\n\n`;
-    texto += `💰 *Valor Total:* R$ ${Number(item.valor || 0).toFixed(2)}\n\n`;
-    texto += `🛡️ *Garantia:* ${item.garantia || 30} dias\n`;
-    texto += `📅 *Início da Garantia:* ${datas.inicio}\n`;
-    texto += `📅 *Fim da Garantia:* ${datas.fim}\n\n`;
-    texto += `*TERMO DE GARANTIA*\n`;
-    texto += `Esta garantia cobre exclusivamente os serviços executados nesta Ordem de Serviço pelo prazo de ${item.garantia || 30} dias.\n`;
-    texto += `Início: ${datas.inicio}\n`;
-    texto += `Validade até: ${datas.fim}\n`;
-    texto += `A garantia *não cobre*:\n\nA garantia não cobre desgaste natural, mau uso, acidentes, modificações realizadas por terceiros ou problemas não relacionados ao serviço executado.\n\n`;
-    texto += `_Obrigado pela preferência! Correndo com segurança._`;
-
-    let num = (item.telefone || "").replace(/\D/g,'');
-    window.open(num ? `https://wa.me/55${num}?text=${encodeURIComponent(texto)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
-}
-
-function gerarGarantiaMotorDirect(id) {
-    let item = encontrarItemPorId(id);
-    if(!item) return;
-
-    let texto = `🏍️ *OFICINA BRAVO*
-    🧾 *CNPJ:* 57.480.896/0001-70
-    📍 *Endereço:* Passagem Canaã, nº 8 — Terra Firme, Belém/PA — CEP 66077-005
+// 💬 ENVIAR VIA WHATSAPP (CORRIGIDO PARA O APK NATIVO)
+function enviarWhatsApp(nome){
+    let r = calc(nome);
+    let mecObj = listaMecanicos.find(m => m.nome === nome);
+    let fone = mecObj ? mecObj.telefone : null;
     
-    \n 
-    
-    
-    
-    # 🛡️ TERMO DE MOTOR
-    Esta garantia cobre exclusivamente os serviços executados nesta Ordem de Serviço pelo prazo de *90 (noventa) dias*
-    Foi realizado *serviço de motor com substituição de peças*, conforme necessidade técnica identificada. Em razão disso, o veículo deverá passar por *acompanhamento preventivo obrigatório* para garantir o correto funcionamento e assentamento adequado das peças
-    🔍 Condições de acompanhamento
-    🔁 O cliente deverá retornar para *acompanhamento periódico a cada 1.000 km*
-     🛢️ A *troca de óleo deve ser feita preferencialmente na Oficina Bravo*
-     📸 Caso a troca seja feita fora, o cliente deverá *enviar foto da quilometragem atual após a troca* para registro
-     🚨 Qualquer ruído ou alteração no funcionamento do motor deverá ser comunicado imediatamente à oficina
-     ⚠️ Limites da garantia
-     * ⛔ desgaste natural de peças de uso e consumo;
-* ⛔ mau uso do veículo;
-* ⛔ acidentes, quedas ou colisões;
-* ⛔ modificações, desmontagens ou reparos realizados por terceiros;
-* ⛔ falta de manutenção preventiva;
-* ⛔ problemas não relacionados ao serviço executado nesta Ordem de Serviço.
-📌 O não cumprimento das orientações poderá comprometer a validade da garantia.
-🙏 *Obrigado pela preferência!*
-🏁 *Oficina Bravo — Correndo com segurança.*
+    if(!fone) return alert("Não há telefone cadastrado para este mecânico.");
 
-
-
+    let text = `*Resumo Financeiro - ${nome}*\n\n` +
+               `📅 Período: ${document.getElementById('filtroInicio').value} até ${document.getElementById('filtroFim').value}\n` +
+               `💰 *Ganhos Brutos:* R$ ${r.ganhos.toFixed(2)}\n` +
+               `🧾 *Vales/Gastos:* R$ ${r.gastos.toFixed(2)}\n` +
+               `📉 *Taxa Oficina (${taxa}%):* R$ ${r.taxaValor.toFixed(2)}\n` +
+               `-----------------------------\n` +
+               `💵 *Saldo Líquido a Receber:* R$ ${r.saldo.toFixed(2)}`;
     
-    \n👤 *Cliente:* ${item.cliente}\n🏍️ *Moto:* ${item.moto}\n⚠️ *Obrigatório:* Retorno a cada 1.000 km para acompanhamento preventivo.`;
-    let num = (item.telefone || "").replace(/\D/g,'');
-    window.open(num ? `https://wa.me/55${num}?text=${encodeURIComponent(texto)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
-}
-
-function imprimirDirect(id) {
-    let item = encontrarItemPorId(id);
-    if(!item) return;
-    
-    let servList = "";
-    if (item.servicos && Array.isArray(item.servicos)) {
-        servList = item.servicos.map(s => `<tr><td style="padding: 3px 0;">* ${s.nome}</td><td style="text-align: right;">R$ ${Number(s.preco).toFixed(2)}</td></tr>`).join("");
+    // Tenta primeiro através de uma possível ponte nativa do APK
+    if (typeof AndroidInterface !== 'undefined' && AndroidInterface.compartilharTexto) {
+        AndroidInterface.compartilharTexto(fone, text);
+    } else if (typeof window.Android !== 'undefined' && window.Android.compartilharTexto) {
+        window.Android.compartilharTexto(fone, text);
     } else {
-        servList = "<tr><td colspan='2'>Nenhum</td></tr>";
+        // Fallback robusto que abre diretamente o app do WhatsApp no celular
+        window.open(`https://api.whatsapp.com/send?phone=${fone}&text=${encodeURIComponent(text)}`, '_blank');
     }
-
-    const datas = calcularDatasGarantia(item);
-
-    let w = window.open('', '_blank');
-    w.document.write(`
-        <html>
-        <head>
-            <style>
-                body {
-                    font-family: monospace;
-                    max-width: 300px;
-                    padding: 10px;
-                    font-size: 11px;
-                    line-height: 1.3;
-                }
-                .text-center { text-align: center; }
-                .divider { border-top: 1px dashed #000; margin: 8px 0; }
-                table { width: 100%; border-collapse: collapse; }
-                .bold { font-weight: bold; }
-            </style>
-        </head>
-        <body>
-            <h3 class="text-center" style="margin: 0 0 5px 0;">OFICINA BRAVO</h3>
-            <div class="text-center">CNPJ: 57.480.896/0001-70<br>Passagem Canaãn°, 8 - Terra Firme<br>Belém - PA, 66077-005</div>
-            <div class="divider"></div>
-            <h4 class="text-center" style="margin: 5px 0;">COMPROVANTE DE SERVIÇO</h4>
-            <b>Cliente:</b> ${item.cliente || "Não informado"}<br>
-            <b>Veículo:</b> ${item.moto || ""} ${item.modelo || ""}<br>
-            <b>KM:</b> ${item.km || "-"}<br>
-            <b>Data:</b> ${item.dataAgendada || "-"} às ${item.horaAgendada || "--:--"}<br>
-            <div class="divider"></div>
-            <table class="bold">
-                <thead>
-                    <tr><th style="text-align: left;">Descrição</th><th style="text-align: right;">Valor</th></tr>
-                </thead>
-                <tbody>
-                    ${servList}
-                </tbody>
-            </table>
-            <div class="divider"></div>
-            <div class="bold" style="font-size: 13px; display: flex; justify-content: space-between;">
-                <span>VALOR TOTAL:</span>
-                <span>R$ ${Number(item.valor || 0).toFixed(2)}</span>
-            </div>
-            <div class="divider"></div>
-            <div class="bold">TERMO DE GARANTIA</div>
-            <div style="font-size: 10px; text-align: justify; margin-top: 5px;">
-                Esta garantia cobre exclusivamente os serviços executados nesta Ordem de Serviço pelo prazo de ${item.garantia || 30} dias.<br>
-                <b>Início:</b> ${datas.inicio}<br>
-                <b>Validade até:</b> ${datas.fim}<br><br>
-                <b>A garantia não cobre:</b> desgaste natural, mau uso, acidentes, modificações realizadas por terceiros ou problemas não relacionados ao serviço executado nesta Ordem de Serviço.
-            </div>
-            <div class="divider"></div>
-            <div class="text-center bold" style="margin-top: 10px;">
-                Obrigado pela preferência!<br>Correndo com segurança.
-            </div>
-            <script>window.onload = function(){ window.print(); window.close(); }</s` + `cript>
-        </body>
-        </html>
-    `);
-    w.document.close();
 }
 
-// --- PROVEDORES CONFIGURAÇÕES BASE ---
-async function salvarServicoBase() {
-    const nome = document.getElementById("base_serv_nome").value;
-    const preco = document.getElementById("base_serv_preco").value;
-    if(!nome || !preco) return;
-    await supabaseClient.from('servicos_base').insert([{ nome, preco }]);
-    document.getElementById("base_serv_nome").value = "";
-    document.getElementById("base_serv_preco").value = "";
-    carregarServicosBase();
-}
-
-async function salvarPecaBase() {
-    const nome = document.getElementById("base_peca_nome").value;
-    const preco = document.getElementById("base_peca_preco").value;
-    if(!nome || !preco) return;
-    await supabaseClient.from('pecas_base').insert([{ nome, preco }]);
-    document.getElementById("base_peca_nome").value = "";
-    document.getElementById("base_peca_preco").value = "";
-    carregarPecasBase();
-}
-
-function listarConfigServicos() {
-    const div = document.getElementById("listaConfigServicos"); div.innerHTML = "";
-    cacheServicosBase.forEach(s => {
-        div.innerHTML += `<div class="card-servico"><span>🛠️ ${s.nome} - R$ ${parseFloat(s.preco).toFixed(2)}</span></div>`;
-    });
-}
-
-function listarConfigPecas() {
-    const div = document.getElementById("listaConfigPecas"); div.innerHTML = "";
-    cachePecasBase.forEach(p => {
-        div.innerHTML += `<div class="card-servico" style="border-left-color:#9b59b6;"><span>📦 ${p.nome} - R$ ${parseFloat(p.preco).toFixed(2)}</span></div>`;
-    });
-}
-
-document.addEventListener("click", function(e) {
-    if(e.target.id !== "campoBuscaOS") {
-        const sug = document.getElementById("sugestoesOS");
-        if(sug) sug.style.display = "none";
+// 🖨️ IMPRIMIR / EXPORTAR PERÍODO (CORRIGIDO PARA O APK NATIVO)
+function dispararImpressao() {
+    // Se estiver rodando dentro do WebView com ponte de impressão nativa
+    if (typeof AndroidInterface !== 'undefined' && AndroidInterface.imprimir) {
+        AndroidInterface.imprimir();
+    } else if (typeof window.Android !== 'undefined' && window.Android.imprimir) {
+        window.Android.imprimir();
+    } else {
+        // Fallback padrão de navegadores
+        window.print();
     }
-});
+}
+
+function renderUser(nome){
+    if(!nome) return;
+    let r = calc(nome);
+
+    if(chart) chart.destroy();
+    
+    chart = new Chart(document.getElementById("chart"),{
+        type:"bar",
+        data:{
+            labels: r.filtrados.map(x=> x.desc.substring(0,10)),
+            datasets:[{
+                label: 'Movimentações (R$)',
+                data: r.filtrados.map(x=> x.tipo==="vale" ? -x.valor : x.valor),
+                backgroundColor: r.filtrados.map(x=> x.tipo==="vale" ? '#ff1744' : '#00e676')
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+
+    document.getElementById("resumo").innerHTML=`
+        <div class="saldo-destaque">👤 ${nome}</div>
+        <div class="saldo-destaque" style="color:${r.saldo >= 0 ? '#00e676':'#ff1744'}">💵 Saldo Líquido: R$ ${r.saldo.toFixed(2)}</div>
+        <div style="margin-bottom: 15px;">
+            <div>🔧 Serviços Executados: ${r.totalServicos}</div><div>💰 Produção Bruta: R$ ${r.ganhos.toFixed(2)}</div>
+            <div>🧾 Vales Retirados: R$ ${r.gastos.toFixed(2)}</div>
+            <div>📉 Retenção Oficina (${taxa}%): R$ ${r.taxaValor.toFixed(2)}</div>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="enviarWhatsApp('${nome}')">💬 Enviar WhatsApp</button>
+            <button class="btn btn-warning" onclick="dispararImpressao()">🖨️ Exportar Período</button>
+        </div>
+        <button class="btn btn-danger" style="margin-top:10px;" onclick="pagarUser('${nome}')">✔ Fechar Conta / Zerar Histórico</button>
+    `;
+
+    document.getElementById("listaLancamentos").innerHTML = r.filtrados.map(i=>`
+        <div class="item ${i.tipo}">
+            <strong>${i.tipo === 'vale' ? '🧾 GASTO/VALE' : '➕ GANHO'}</strong> - R$ ${i.valor.toFixed(2)}<br>
+            <small>${i.desc}</small> <br>
+            <span style="font-size:10px; color:var(--text-muted)">${new Date(i.data).toLocaleDateString()}</span>
+            <div class="btn-group" style="grid-template-columns: 1fr 1fr; margin-top:5px;">
+                <button class="btn btn-warning" style="padding:4px; font-size:12px;" onclick="editItem('${i.mecanico}',${i.id})">Editar</button>
+                <button class="btn btn-danger" style="padding:4px; font-size:12px;" onclick="deleteItem('${i.mecanico}',${i.id})">Excluir</button>
+            </div>
+        </div>
+    `).join("");
+}
+
+function autoRender(){
+    let u = document.getElementById("userSelect").value;
+    if(u) renderUser(u);
+}
+
+function updateUserSelectUI(){
+    let sel=document.getElementById("userSelect");
+    let atual = sel.value;
+    sel.innerHTML="";
+
+    listaMecanicos.forEach(m=>{
+        let o=document.createElement("option");
+        o.value=m.nome; o.text=m.nome;
+        sel.appendChild(o);
+    });
+
+    if(atual && listaMecanicos.some(m => m.nome === atual)) sel.value = atual;
+    if(sel.value && !atual) renderUser(sel.value);
+}
+
+async function addGastoEmpresa(){
+    let v=Number(document.getElementById("gastoValor").value);
+    let d=document.getElementById("gastoDesc").value || "Gasto Geral";
+    if(!v) return;
+
+    const { error } = await db.from('gastos_empresa').insert([{
+        valor: v,
+        desc: d,
+        data: new Date().toISOString()
+    }]);
+
+    if(error) return alert("Erro ao registrar gasto: " + error.message);
+
+    document.getElementById("gastoValor").value="";
+    document.getElementById("gastoDesc").value="";
+    toast('💸 Gasto registrado!');
+    await fetchDataFromSupabase();
+}
+
+async function removerGastoEmpresa(id){
+    let confirmacao = await customConfirm("Excluir Gasto", "Deseja realmente excluir este gasto operacional da empresa?");
+    if(confirmacao) {
+        const { error } = await db.from('gastos_empresa').delete().eq('id', id);
+        if(error) return alert("Erro ao remover gasto: " + error.message);
+        
+        toast('🗑️ Gasto removido!');
+        await fetchDataFromSupabase();
+    }
+}
+
+function renderGeral(){
+    let totalG=0, totalT=0;
+    let ranking = [];
+    
+    let ini = new Date(document.getElementById('filtroInicio').value + 'T00:00:00');
+    let fim = new Date(document.getElementById('filtroFim').value + 'T23:59:59');
+
+    listaMecanicos.forEach(m=>{
+        let r=calc(m.nome);
+        totalG+=r.ganhos;
+        totalT+=r.taxaValor;
+        ranking.push({nome: m.nome, faturamento: r.ganhos});
+    });
+
+    ranking.sort((a,b) => b.faturamento - a.faturamento);
+
+    let gastosEmpFiltrados = listaGastosEmpresa.filter(g => {
+        let d = new Date(g.data);
+        return d >= ini && d <= fim;
+    });
+
+    let gastoEmp = gastosEmpFiltrados.reduce((a,b)=>a+b.valor,0);
+    let lucro = totalT - gastoEmp;
+    let totalServicosOficina = listaMecanicos.reduce((t,m)=>t+calc(m.nome).totalServicos,0);
+
+    document.getElementById("resumoGeral").innerHTML=`
+        <h3>📊 Balanço Geral Oficina (No Período)</h3>
+        <div class="saldo-destaque" style="color:${lucro >= 0 ? '#00e676':'#ff1744'}">🏢 Lucro Líquido: R$ ${lucro.toFixed(2)}</div>
+        <div>💰 Faturamento Total Bruto: R$ ${totalG.toFixed(2)}</div>
+        <div>📉 Retenção de Taxas (${taxa}%): R$ ${totalT.toFixed(2)}</div>
+        <div>🔧 Total de Serviços: ${totalServicosOficina}</div><div>💸 Gastos Operacionais: R$ ${gastoEmp.toFixed(2)}</div>
+        <button class="btn btn-warning" style="margin-top:15px;" onclick="dispararImpressao()">🖨️ Imprimir Balanço Geral</button>
+    `;
+
+    document.getElementById("rankingMecanicos").innerHTML=`<div style="overflow-x:auto">
+<table style="width:100%;border-collapse:collapse">
+<thead><tr>
+<th>#</th><th>Mecânico</th><th>Serviços</th><th>Produção</th><th>Vales</th><th>Retenção</th><th>Saldo</th>
+</tr></thead><tbody>
+${ranking.map((m,idx)=>{let r=calc(m.nome);return `<tr>
+<td>${idx+1}</td>
+<td>${m.nome}</td>
+<td>${r.totalServicos}</td>
+<td>R$ ${r.ganhos.toFixed(2)}</td>
+<td>R$ ${r.gastos.toFixed(2)}</td>
+<td>R$ ${r.taxaValor.toFixed(2)}</td>
+<td>R$ ${r.saldo.toFixed(2)}</td>
+</tr>`}).join('')}
+</tbody></table></div>`;
+
+    document.getElementById("listaGastosEmpresa").innerHTML = gastosEmpFiltrados.map(g=>`
+        <div class="item vale">
+            R$ ${g.valor.toFixed(2)} - ${g.desc} <br>
+            <span style="font-size:10px; color:var(--text-muted)">${new Date(g.data).toLocaleDateString()}</span>
+            <button class="btn btn-danger" style="padding:4px; margin-top:5px; font-size:12px;" onclick="removerGastoEmpresa(${g.id})">Excluir</button>
+        </div>
+    `).join("");
+}
+
+verificarSessaoAtiva();
+show("individual");
 </script>
 </body>
 </html>
